@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      metal:use-macro="view.macro('arche:templates/base_view.pt', 'arche:templates/inline.pt')"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="voteit.vote_groups">
+<body>
+  <div metal:fill-slot="main-content">
+  <h2 i18n:translate="meeting_vote_groups_header">
+      Vote groups
+  </h2>
+
+  <div class="btn-group hidden-print" role="group">
+    <a class="btn btn-default"
+       tal:condition="request.is_moderator"
+       href="${request.resource_url(context, 'add_vote_group')}"
+       i18n:translate="">
+        <span class="glyphicon glyphicon-plus"></span>
+        New vote group
+    </a>
+    <a class="btn btn-default"
+       tal:condition="request.is_moderator"
+       href="javascript:window.print()"
+       i18n:translate="">
+        <span class="glyphicon glyphicon-print"></span>
+        Print
+    </a>
+
+    <tal:delegation_controls condition="not request.is_moderator">
+      <a class="buttonize"
+         tal:condition="show_all"
+         href="${request.resource_url(context, 'vote_groups')}"
+         i18n:translate="">
+          Hide <tal:ts i18n:name="count">${all_count - len(my_delegations)}</tal:ts> other delegations
+      </a>
+      <a class="buttonize"
+         tal:condition="not show_all"
+         href="${request.resource_url(context, 'vote_groups', query = {'show_all': '1'})}"
+         i18n:translate="">
+          Show <tal:ts i18n:name="count">${all_count - len(my_delegations)}</tal:ts> other delegations
+      </a>
+    </tal:delegation_controls>
+  </div>
+  <br/><br/>
+  <div class="list-group">
+    <div class="list-group-item" tal:repeat="vote_group vote_groups">
+
+      <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
+
+      <p tal:condition="vote_group.description" tal:content="vote_group.description"></p>
+
+      <div class="btn-group hidden-print" role="group"
+          tal:define="is_moderator_or_primary request.authenticated_userid in vote_group.primaries or request.is_moderator;"
+          tal:condition="is_moderator_or_primary">
+          <a tal:condition="request.is_moderator"
+             class="btn btn-default"
+             href="${request.resource_url(context, 'edit_vote_group', query = {'vote_group': vote_group.name})}"
+             i18n:translate="">
+              Edit
+          </a>
+          <a tal:condition="request.is_moderator"
+             class="btn btn-default"
+             href="${request.resource_url(context, 'delete_vote_group', query = {'vote_group': vote_group.name})}"
+             i18n:translate="">
+              Delete
+          </a>
+      </div>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th i18n:translate="">
+                <tal:trans i18n:name="member_count" tal:content="len(vote_group.primaries)">1</tal:trans>
+                primar${len(vote_group.primaries) != 1 and 'ies' or 'y'}</th>
+            <th i18n:translate="">Stand-in</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:repeat="userid vote_group.primaries">
+            <td>
+              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            </td>
+            <td>
+              <a tal:condition="userid in vote_group.assignments" tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
+              <a tal:condition="userid not in vote_group.assignments" class="btn btn-default" tal:attributes="disabled not vote_group.free_standins" href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Choose stand-in</a>
+              <a tal:condition="userid in vote_group.assignments" class="btn btn-default" href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Release stand-in</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th i18n:translate="">
+              <tal:trans i18n:name="member_count" tal:content="len(vote_group.standins)">1</tal:trans>
+              stand-in${len(vote_group.standins) != 1 and 's' or None}
+            </th>
+          </tr>
+        </thead>
+          <tbody>
+            <tr tal:repeat="userid vote_group.standins">
+              <td>
+                <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div><!-- list-group-item -->
+    </div>
+  </div>
+</body>
+</html>
