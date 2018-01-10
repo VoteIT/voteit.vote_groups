@@ -69,17 +69,31 @@ class MeetingVoteGroup(Persistent):
     title = ""
     description = ""
 
-    def __init__(self, name, title="", description="", primaries=(), standins=(), assignments=None):
+    def __init__(self, name, title="", description="", members=(), assignments=None):
         self.name = name
         self.title = title
         self.description = description
-        self.primaries = OOSet(primaries)
-        self.standins = OOSet(standins)
+        self.members = OOSet(members)
         self.assignments = OOBTree(assignments or {})
 
     @property
     def free_standins(self):
         return set(self.standins).difference(self.assignments.values())
+
+    def get_users_with_role(self, role):
+        return [m['user'] for m in self.members if m['role'] == role]
+
+    @property
+    def primaries(self):
+        return self.get_users_with_role('primary')
+
+    @property
+    def standins(self):
+        return self.get_users_with_role('standin')
+
+    @property
+    def observers(self):
+        return self.get_users_with_role('observer')
 
 
 def includeme(config):

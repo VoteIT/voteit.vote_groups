@@ -71,19 +71,20 @@
           <tr>
             <th i18n:translate="">
                 <tal:trans i18n:name="member_count" tal:content="len(vote_group.primaries)">1</tal:trans>
-                primar${len(vote_group.primaries) != 1 and 'ies' or 'y'}</th>
+                primar${len(vote_group.primaries) == 1 and 'y' or 'ies'}</th>
             <th i18n:translate="">Stand-in</th>
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="userid vote_group.primaries">
+          <tr tal:repeat="userid  vote_group.primaries">
             <td>
               <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
             </td>
             <td>
               <a tal:condition="userid in vote_group.assignments" tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
-              <a tal:condition="userid not in vote_group.assignments" class="btn btn-default" tal:attributes="disabled not vote_group.free_standins" href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Choose stand-in</a>
-              <a tal:condition="userid in vote_group.assignments" class="btn btn-default" href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Release stand-in</a>
+              <a tal:condition="userid not in vote_group.assignments and vote_group.free_standins" class="btn btn-default pull-right" href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Choose stand-in</a>
+              <a tal:condition="userid not in vote_group.assignments and not vote_group.free_standins" class="btn btn-default pull-right" disabled href="#" i18n:translate="">No stand-ins available</a>
+              <a tal:condition="userid in vote_group.assignments" class="btn btn-default pull-right" href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}" i18n:translate="">Release stand-in</a>
             </td>
           </tr>
         </tbody>
@@ -98,16 +99,34 @@
             </th>
           </tr>
         </thead>
-          <tbody>
-            <tr tal:repeat="userid vote_group.standins">
-              <td>
-                <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div><!-- list-group-item -->
-    </div>
+        <tbody>
+          <tr tal:repeat="userid vote_group.standins">
+            <td>
+              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="table table-striped" tal:condition="vote_group.observers">
+        <thead>
+          <tr>
+            <th i18n:translate="">
+              <tal:trans i18n:name="member_count" tal:content="len(vote_group.observers)">1</tal:trans>
+              observer${len(vote_group.observers) != 1 and 's' or None}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:repeat="userid vote_group.observers">
+            <td>
+              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div><!-- list-group-item -->
+  </div>
   </div>
 </body>
 </html>

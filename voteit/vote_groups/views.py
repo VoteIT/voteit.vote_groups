@@ -108,17 +108,16 @@ class EditVoteGroupForm(DefaultEditForm):
     def appstruct(self):
         return dict(title=self.group.title,
                     description=self.group.description,
-                    primaries=self.group.primaries,
-                    standins=self.group.standins)
+                    members=self.group.members)
 
     def save_success(self, appstruct):
         group = self.group
         group.title = appstruct['title']
         group.description = appstruct['description']
-        group.primaries.clear()
-        group.primaries.update(appstruct['primaries'])
-        group.standins.clear()
-        group.standins.update(appstruct['standins'])
+        group.members.clear()
+        group.members.update(appstruct['members'])
+        # group.standins.clear()
+        # group.standins.update(appstruct['standins'])
         self.flash_messages.add(self.default_success)
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)

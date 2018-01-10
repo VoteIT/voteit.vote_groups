@@ -12,20 +12,30 @@ from voteit.vote_groups import _
 from voteit.vote_groups.interfaces import IMeetingVoteGroups
 
 
-class PrimariesMembersSequence(colander.SequenceSchema):
-    primaries = colander.SchemaNode(colander.String(),
-                                    title=_("Vote group primaries"),
-                                    description=_("Start typing a userid"),
-                                    widget=userid_hinder_widget,
-                                    validator=existing_userids)
+ROLE_CHOICES = (
+    ('primary', _('Primary')),
+    ('standin', _('Stand-in')),
+    ('observer', _('Observer')),
+)
 
 
-class StandinMembersSequence(colander.SequenceSchema):
-    standins = colander.SchemaNode(colander.String(),
-                                   title=_("Vote group stand-ins"),
-                                   description=_("Start typing a userid"),
-                                   widget=userid_hinder_widget,
-                                   validator=existing_userids)
+class MemberSchema(colander.Schema):
+    user = colander.SchemaNode(
+        colander.String(),
+        title=_("Vote group member"),
+        description=_("Start typing a userid"),
+        widget=userid_hinder_widget,
+        validator=existing_userids
+    )
+    role = colander.SchemaNode(
+        colander.String(),
+        title=_('Role'),
+        widget=deform.widget.SelectWidget(values=ROLE_CHOICES),
+    )
+
+
+class MembersSequence(colander.SequenceSchema):
+    member = MemberSchema(title=_('Member'))
 
 
 @colander.deferred
@@ -45,48 +55,50 @@ class VoteGroupValidator(object):
             raise HTTPNotFound
         return self.groups[group_id]
 
+    def get_users_with_role(self, members, role):
+        return set([m['user'] for m in members if m['role'] == role])
+
     def __call__(self, form, value):
         exc = colander.Invalid(form, 'Error when selecting group members')
-        primaries = set(value['primaries'])
-        standins = set(value['standins'])
+        primaries = self.get_users_with_role(value['members'], 'primary')
+        standins = self.get_users_with_role(value['members'], 'standin')
         if primaries.intersection(standins):
-            exc['standins'] = _('Same person can not be both primary and stand-in.')
-        # TODO Check other vote groups for membership
+            exc['members'] = _('Same person can not be both primary and stand-in.')
         for grp in self.groups.values():
             if grp == self.group:
                 continue
-            grp_members = set(grp.primaries).union(grp.standins)
-            intersect = primaries.intersection(grp_members)
+            grp_primaries = set(grp.primaries)
+            intersect = primaries.intersection(grp_primaries)
             if intersect:
-                exc['primaries'] = _('User(s) ${users} has membership in other group.',
+                exc['members'] = _('User(s) ${users} is already primary in other group.',
                                      mapping={'users': ', '.join(intersect)})
-            intersect = standins.intersection(grp_members)
-            if intersect:
-                exc['standins'] = _('User(s) ${users} has membership in other group.',
-                                    mapping={'users': ', '.join(intersect)})
 
         for user_id in self.group.assignments.keys():
             if user_id not in primaries:
-                exc['primaries'] = _('Cannot remove users with transferred voter permission.')
+                exc['members'] = _('Cannot remove users with transferred voter permission.')
         for user_id in self.group.assignments.values():
             if user_id not in standins:
-                exc['standins'] = _('Cannot remove users with transferred voter permission.')
+                exc['members'] = _('Cannot remove users with transferred voter permission.')
 
         if len(exc.children):
             raise exc
 
 
 class EditMeetingVoteGroupSchema(colander.Schema):
-    title = colander.SchemaNode(colander.String(),
-                                title=_("Title"))
-    description = colander.SchemaNode(colander.String(),
-                                      title=_("Description"),
-                                      missing="",
-                                      widget=deform.widget.TextAreaWidget())
-    primaries = PrimariesMembersSequence(title=_("Vote group primaries"),
-                                         description=_("Add one UserID per row."))
-    standins = StandinMembersSequence(title=_("Vote group stand-ins"),
-                                         description=_("Add one UserID per row."))
+    title = colander.SchemaNode(
+        colander.String(),
+        title=_("Title"),
+    )
+    description = colander.SchemaNode(
+        colander.String(),
+        title=_("Description"),
+        missing="",
+        widget=deform.widget.TextAreaWidget(),
+    )
+    members = MembersSequence(
+        title=_("Vote group members"),
+        description=_("Add one UserID per row."),
+    )
     validator = VoteGroupValidator
 
 
