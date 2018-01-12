@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from uuid import uuid4
 
-from BTrees.OIBTree import OIBTree
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
 from persistent import Persistent

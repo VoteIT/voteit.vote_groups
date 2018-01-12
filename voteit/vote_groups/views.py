@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import colander
-import deform
-from arche.views.base import BaseView, DefaultEditForm, DefaultDeleteForm
+from arche.views.base import BaseView
+from arche.views.base import DefaultDeleteForm
+from arche.views.base import DefaultEditForm
 from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPForbidden, HTTPFound
+from pyramid.httpexceptions import HTTPForbidden
+from pyramid.httpexceptions import HTTPFound
 from pyramid.traversal import resource_path
 from pyramid.view import view_config
-from voteit.vote_groups.schemas import AssignVoteSchema
-
-from voteit.core.models.interfaces import IMeeting
-from voteit.core.models.interfaces import IUser
 from voteit.core import security
+from voteit.core.models.interfaces import IMeeting
 
 from voteit.vote_groups import _
 from voteit.vote_groups.interfaces import IMeetingVoteGroups
-from voteit.vote_groups.interfaces import IMeetingVoteGroup
+from voteit.vote_groups.schemas import AssignVoteSchema
 
 
 def _check_ongoing_poll(view):
