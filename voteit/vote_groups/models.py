@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from persistent import Persistent
 from uuid import uuid4
 
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
-from persistent import Persistent
-from zope.interface import implementer
-from zope.component import adapter
+from pyramid.threadlocal import get_current_request
 from voteit.core.models.interfaces import IMeeting
+from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
+from voteit.irl.models.interfaces import IMeetingPresence
+from zope.component import adapter
+from zope.interface import implementer
 
-from voteit.vote_groups.interfaces import IMeetingVoteGroups
-from voteit.vote_groups.interfaces import IMeetingVoteGroup
+from voteit.vote_groups import _
+from voteit.vote_groups.interfaces import IVoteGroup
+from voteit.vote_groups.interfaces import IVoteGroups
 
 
-@implementer(IMeetingVoteGroups)
+@implementer(IVoteGroups)
 @adapter(IMeeting)
-class MeetingVoteGroups(object):
-    """ See .interfaces.IMeetingVoteGroups """
+class VoteGroups(object):
+    """ See .interfaces.IVoteGroups """
 
     def __init__(self, context):
         self.context = context
@@ -63,8 +67,8 @@ class MeetingVoteGroups(object):
         return True
 
 
-@implementer(IMeetingVoteGroup)
-class MeetingVoteGroup(Persistent):
+@implementer(IVoteGroup)
+class VoteGroup(Persistent):
     title = ""
     description = ""
 
@@ -95,5 +99,24 @@ class MeetingVoteGroup(Persistent):
         return self.get_users_with_role('observer')
 
 
+class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
+    name = 'present_with_vote_groups'
+    title = _("Present with group voter rights.")
+    description = _("present_with_vote_groups_description",
+                    default="Will set voter rights for present user according to vote groups settings.")
+
+    def get_voters(self, request=None, **kw):
+        if request is None:
+            request = get_current_request()
+        meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
+        groups = IVoteGroups(self.context)
+        group_voter_rights = set()
+        for grp in groups.values():
+            group_voter_rights.update(list(grp.assignments.values()) +
+                                      filter(lambda uid: uid not in grp.assignments, grp.primaries))
+        return frozenset(group_voter_rights.intersection(meeting_presence.present_userids))
+
+
 def includeme(config):
-    config.registry.registerAdapter(MeetingVoteGroups)
+    config.registry.registerAdapter(VoteGroups)
+    config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)
