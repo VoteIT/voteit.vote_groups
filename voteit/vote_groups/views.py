@@ -13,7 +13,7 @@ from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
 
 from voteit.vote_groups import _
-from voteit.vote_groups.interfaces import IMeetingVoteGroups
+from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.schemas import AssignVoteSchema
 
 

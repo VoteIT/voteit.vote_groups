@@ -9,7 +9,7 @@ from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPNotFound
 
 from voteit.vote_groups import _
-from voteit.vote_groups.interfaces import IMeetingVoteGroups
+from voteit.vote_groups.interfaces import IVoteGroups
 
 
 ROLE_CHOICES = (
@@ -45,7 +45,7 @@ class VoteGroupValidator(object):
 
     @reify
     def groups(self):
-        return IMeetingVoteGroups(self.request.meeting)
+        return IVoteGroups(self.request.meeting)
 
     @reify
     def group(self):
