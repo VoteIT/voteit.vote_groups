@@ -116,4 +116,4 @@ class AssignVoteSchema(colander.Schema):
 
 
 def includeme(config):
-    config.add_schema('MeetingVoteGroup', EditMeetingVoteGroupSchema, 'edit')
+    config.add_schema('VoteGroup', EditMeetingVoteGroupSchema, 'edit')

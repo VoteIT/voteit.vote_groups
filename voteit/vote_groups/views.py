@@ -88,7 +88,7 @@ class EditVoteGroupForm(DefaultEditForm):
     """ Edit vote group, for moderators.
     """
     title = _("Edit vote group")
-    type_name = 'MeetingVoteGroup'
+    type_name = 'VoteGroup'
 
     @reify
     def group_name(self):
@@ -171,7 +171,7 @@ class AssignVoteForm(DefaultEditForm):
     """ Assign vote to stand-in.
     """
     # TODO Check permission
-    type_name = 'MeetingVoteGroup'
+    type_name = 'VoteGroup'
 
     @property
     def title(self):

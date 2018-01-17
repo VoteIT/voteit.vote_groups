@@ -31,7 +31,7 @@ class VoteGroups(object):
 
     def new(self):
         name = unicode(uuid4())
-        self.context.__vote_groups__[name] = MeetingVoteGroup(name)
+        self.context.__vote_groups__[name] = VoteGroup(name)
         return name
 
     def get_standin_for(self, userid):
