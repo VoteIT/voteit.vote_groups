@@ -33,7 +33,7 @@ class MeetingVoteGroupsView(BaseView):
 
     @reify
     def meeting_vote_groups(self):
-        return self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)
+        return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
@@ -72,7 +72,7 @@ class MeetingVoteGroupsView(BaseView):
         _check_ongoing_poll(self)
 
         group_name = self.request.GET.get('vote_group')
-        group = self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)[group_name]
+        group = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)[group_name]
         primary = self.request.GET.get('primary')
         del group.assignments[primary]
 
@@ -96,7 +96,7 @@ class EditVoteGroupForm(DefaultEditForm):
 
     @reify
     def group(self):
-        groups = self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)
+        groups = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
         return groups[self.group_name]
 
     def __init__(self, context, request):
@@ -144,7 +144,7 @@ class DeleteVoteGroupForm(DefaultDeleteForm):
 
     @reify
     def meeting_vote_groups(self):
-        return self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)
+        return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     def __init__(self, context, request):
         super(DeleteVoteGroupForm, self).__init__(context, request)
@@ -187,7 +187,7 @@ class AssignVoteForm(DefaultEditForm):
 
     @reify
     def group(self):
-        groups = self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)
+        groups = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
         return groups[self.group_name]
 
     @reify
@@ -210,7 +210,7 @@ class AssignVoteForm(DefaultEditForm):
 
     @reify
     def meeting_vote_groups(self):
-        return self.request.registry.getAdapter(self.request.meeting, IMeetingVoteGroups)
+        return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
