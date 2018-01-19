@@ -29,16 +29,16 @@ def _check_ongoing_poll(view):
                             "Try again when polls have closed."))
 
 
-class MeetingVoteGroupsView(BaseView):
+class VoteGroupsView(BaseView):
 
     @reify
-    def meeting_vote_groups(self):
+    def vote_groups(self):
         return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
         show_all = self.request.GET.get('show_all', False)
-        standins = sorted(self.meeting_vote_groups.values(), key=lambda x: x.title.lower())
+        groups = sorted(self.vote_groups.values(), key=lambda x: x.title.lower())
         my_standin = None
         # if not self.request.is_moderator:
         #     for standin in standins:
@@ -46,11 +46,11 @@ class MeetingVoteGroupsView(BaseView):
         #         if self.request.authenticated_userid in pool:
         #             my_delegations.append(delegation)
         response = {}
-        response['all_count'] = len(self.meeting_vote_groups)
+        response['all_count'] = len(self.vote_groups)
         response['my_standin'] = my_standin
         response['show_all'] = show_all
         if show_all or self.request.is_moderator:
-            response['vote_groups'] = standins
+            response['vote_groups'] = groups
         else:
             response['vote_groups'] = my_standin
         return response
@@ -60,7 +60,7 @@ class MeetingVoteGroupsView(BaseView):
         """ Add a new delegation and redirect to edit view.
         """
         _check_ongoing_poll(self)
-        name = self.meeting_vote_groups.new()
+        name = self.vote_groups.new()
         url = self.request.resource_url(self.context, 'edit_vote_group', query={'vote_group': name})
         return HTTPFound(location=url)
 
@@ -114,8 +114,6 @@ class EditVoteGroupForm(DefaultEditForm):
         group.description = appstruct['description']
         group.members.clear()
         group.members.update(appstruct['members'])
-        # group.standins.clear()
-        # group.standins.update(appstruct['standins'])
         self.flash_messages.add(self.default_success)
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
@@ -136,14 +134,14 @@ class DeleteVoteGroupForm(DefaultDeleteForm):
     def title(self):
         return _("really_delete_vote_group_warning",
                  default="Really delete vote group '${vote_group_title}'? This can't be undone",
-                 mapping={'vote_group_title': self.meeting_vote_groups[self.group_name].title})
+                 mapping={'vote_group_title': self.vote_groups[self.group_name].title})
 
     @reify
     def group_name(self):
         return self.request.GET.get('vote_group')
 
     @reify
-    def meeting_vote_groups(self):
+    def vote_groups(self):
         return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     def __init__(self, context, request):
@@ -152,9 +150,9 @@ class DeleteVoteGroupForm(DefaultDeleteForm):
 
     def delete_success(self, appstruct):
         msg = _("Deleted '${title}'",
-                mapping={'title': self.meeting_vote_groups[self.group_name].title})
+                mapping={'title': self.vote_groups[self.group_name].title})
         self.flash_messages.add(msg, type='warning')
-        del self.meeting_vote_groups[self.group_name]
+        del self.vote_groups[self.group_name]
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
@@ -179,7 +177,7 @@ class AssignVoteForm(DefaultEditForm):
                  default="Choose stand-in for ${user} (${vote_group_title})",
                  mapping={
                      'user': self.for_user,
-                     'vote_group_title': self.meeting_vote_groups[self.group_name].title})
+                     'vote_group_title': self.vote_groups[self.group_name].title})
 
     @reify
     def group_name(self):
@@ -201,7 +199,7 @@ class AssignVoteForm(DefaultEditForm):
 
     def get_schema(self):
         choices = []
-        for standin in self.group.free_standins:
+        for standin in self.vote_groups.get_free_standins(self.group):
             choices.append((standin, standin))
         return AssignVoteSchema().bind(choices=choices)
 
@@ -209,7 +207,7 @@ class AssignVoteForm(DefaultEditForm):
         return dict(standins=self.group.standins)
 
     @reify
-    def meeting_vote_groups(self):
+    def vote_groups(self):
         return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     def __init__(self, context, request):

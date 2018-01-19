@@ -5,6 +5,7 @@ import colander
 import deform
 from arche.schemas import userid_hinder_widget
 from arche.validators import existing_userids
+from arche.widgets import Html5InputWidget
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPNotFound
 
@@ -22,10 +23,18 @@ ROLE_CHOICES = (
 class MemberSchema(colander.Schema):
     user = colander.SchemaNode(
         colander.String(),
-        title=_("Vote group member"),
+        title=_("Username"),
         description=_("Start typing a userid"),
         widget=userid_hinder_widget,
-        validator=existing_userids
+        validator=existing_userids,
+        missing='',
+    )
+    email = colander.SchemaNode(
+        colander.String(),
+        title=_("Associate with email"),
+        widget=Html5InputWidget(input_type='email'),
+        validator=colander.Email(),
+        missing='',
     )
     role = colander.SchemaNode(
         colander.String(),
@@ -58,33 +67,46 @@ class VoteGroupValidator(object):
     def get_users_with_role(self, members, role):
         return set([m['user'] for m in members if m['role'] == role])
 
+    def get_users_mapping(self, users):
+        return {'users': ', '.join(users)}
+
     def __call__(self, form, value):
         exc = colander.Invalid(form, 'Error when selecting group members')
         primaries = self.get_users_with_role(value['members'], 'primary')
         standins = self.get_users_with_role(value['members'], 'standin')
-        if primaries.intersection(standins):
-            exc['members'] = _('Same person can not be both primary and stand-in.')
-        for grp in self.groups.values():
-            if grp == self.group:
-                continue
-            grp_primaries = set(grp.primaries)
-            intersect = primaries.intersection(grp_primaries)
-            if intersect:
-                exc['members'] = _('User(s) ${users} is already primary in other group.',
-                                     mapping={'users': ', '.join(intersect)})
 
-        for user_id in self.group.assignments.keys():
-            if user_id not in primaries:
-                exc['members'] = _('Cannot remove users with transferred voter permission.')
-        for user_id in self.group.assignments.values():
-            if user_id not in standins:
-                exc['members'] = _('Cannot remove users with transferred voter permission.')
+        # Users can only have one role in a group.
+        all_members = [m['user'] for m in value['members']]
+        non_unique = set([u for u in all_members if all_members.count(u) > 1])
+        if non_unique:
+            exc['members'] = _('User(s) ${users} have more than one role in this group.',
+                               mapping=self.get_users_mapping(non_unique))
+
+        # Users can only be primary in one group.
+        intersect = primaries.intersection(self.groups.get_primaries(self.group))
+        if intersect:
+            exc['members'] = _('User(s) ${users} is already primary in other group.',
+                               mapping=self.get_users_mapping(intersect))
+
+        # Users with transferred voter rights can't be changed.
+        changed = set()
+        changed.update(set(self.group.assignments.keys()).difference(primaries))
+        changed.update(set(self.group.assignments.values()).difference(standins))
+        if changed:
+            exc['members'] = _('Cannot change user(s) ${users} with transferred voter permission.',
+                               mapping=self.get_users_mapping(changed))
+
+        # Group members must have one of userid or email.
+        for m in value['members']:
+            if bool(m['user']) == bool(m['email']):
+                exc['members'] = _('Users must be added with userid or email (not both).')
+                break
 
         if len(exc.children):
             raise exc
 
 
-class EditMeetingVoteGroupSchema(colander.Schema):
+class EditVoteGroupSchema(colander.Schema):
     title = colander.SchemaNode(
         colander.String(),
         title=_("Title"),
@@ -116,4 +138,4 @@ class AssignVoteSchema(colander.Schema):
 
 
 def includeme(config):
-    config.add_schema('VoteGroup', EditMeetingVoteGroupSchema, 'edit')
+    config.add_schema('VoteGroup', EditVoteGroupSchema, 'edit')

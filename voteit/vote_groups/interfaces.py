@@ -16,6 +16,18 @@ class IVoteGroups(Interface):
     def get_standin_for(userid):
         """ Return delegation where userid is a member, or None if nothing can be found. """
 
+    def get_members():
+        """ Return set with all group members """
+
+    def get_voters():
+        """ Return set of users with current vote rights """
+
+    def get_primaries(exclude_group):
+        """ Return set with all primary voters, excluding exclude_group if present """
+
+    def get_free_standins(group):
+        """ Return set with free stand-ins for vote group """
+
 
 class IVoteGroup(Interface):
     """ A meeting delegation. Handled by IVoteGroups adapter.

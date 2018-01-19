@@ -39,7 +39,29 @@ class VoteGroups(object):
             if userid in delegation.members:
                 return delegation
 
-    def get(self, name, default = None):
+    def get_members(self):
+        members = set()
+        for grp in self.values():
+            members.update([m['user'] for m in grp.members])
+        return members
+
+    def get_voters(self):
+        voter_rights = set()
+        for grp in self.values():
+            voter_rights.update(list(grp.assignments.values()))
+            voter_rights.update(filter(lambda uid: uid not in grp.assignments, grp.primaries))
+        return voter_rights
+
+    def get_primaries(self, exclude_group=None):
+        all_primaries = set()
+        for group in filter(lambda g: g != exclude_group, self.values()):
+            all_primaries.update(group.primaries)
+        return all_primaries
+
+    def get_free_standins(self, group):
+        return set(group.standins).difference(self.get_voters())
+
+    def get(self, name, default=None):
         return self.context.__vote_groups__.get(name, default)
 
     def __getitem__(self, name):
@@ -80,10 +102,6 @@ class VoteGroup(Persistent):
         self.members = OOSet(members)
         self.assignments = OOBTree(assignments or {})
 
-    @property
-    def free_standins(self):
-        return set(self.standins).difference(self.assignments.values())
-
     def get_users_with_role(self, role):
         return [m['user'] for m in self.members if m['role'] == role]
 
@@ -111,11 +129,7 @@ class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
             request = get_current_request()
         meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
         groups = IVoteGroups(self.context)
-        group_voter_rights = set()
-        for grp in groups.values():
-            group_voter_rights.update(list(grp.assignments.values()) +
-                                      filter(lambda uid: uid not in grp.assignments, grp.primaries))
-        return frozenset(group_voter_rights.intersection(meeting_presence.present_userids))
+        return frozenset(groups.get_members().intersection(meeting_presence.present_userids))
 
 
 def includeme(config):
