@@ -33,10 +33,9 @@ class IVoteGroup(Interface):
     """ A meeting delegation. Handled by IVoteGroups adapter.
     """
     name = Attribute("Name of the interface. Used to fetch this object from the IVoteGroups adapter.")
-    title = Attribute("Title of delegation")
-    primaries = Attribute("Primaries who are allowed to delegate or take back votes.")
-    standins = Attribute("Stand-ins. You need to be a registered stand-in to be able to receive voting rights.")
+    title = Attribute("Title of delegation.")
+    members = Attribute("Members in this group.")
     assignments = Attribute("Votes assigned from a primary voter to a standin.")
 
-    def __init__(name, title = u"", primaries = (), standins = ()):
+    def __init__(name, title="", description="", members=()):
         """ Constructor, normally not passed any values within this app. """

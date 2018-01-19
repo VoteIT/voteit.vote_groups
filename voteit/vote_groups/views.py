@@ -37,22 +37,14 @@ class VoteGroupsView(BaseView):
 
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
-        show_all = self.request.GET.get('show_all', False)
-        groups = sorted(self.vote_groups.values(), key=lambda x: x.title.lower())
-        my_standin = None
-        # if not self.request.is_moderator:
-        #     for standin in standins:
-        #         pool = set(standin.leaders) | set(delegation.members)
-        #         if self.request.authenticated_userid in pool:
-        #             my_delegations.append(delegation)
-        response = {}
-        response['all_count'] = len(self.vote_groups)
-        response['my_standin'] = my_standin
-        response['show_all'] = show_all
-        if show_all or self.request.is_moderator:
-            response['vote_groups'] = groups
-        else:
-            response['vote_groups'] = my_standin
+        sorted_groups = self.request.is_moderator and \
+                        self.vote_groups.sorted() or \
+                        self.vote_groups.vote_groups_for_user(self.request.authenticated_userid)
+        response = {
+            'all_count': len(self.vote_groups),
+            'vote_groups': self.vote_groups,
+            'sorted_groups': sorted_groups,
+        }
         return response
 
     @view_config(name="add_vote_group", context=IMeeting, permission=security.MODERATE_MEETING)

@@ -58,6 +58,12 @@ class VoteGroups(object):
             all_primaries.update(group.primaries)
         return all_primaries
 
+    def sorted(self):
+        return sorted(self.values(), key=lambda g: g.title.lower())
+
+    def vote_groups_for_user(self, user):
+        return filter(lambda g: g.has_user(user), self.sorted())
+
     def get_free_standins(self, group):
         return set(group.standins).difference(self.get_voters())
 
@@ -95,12 +101,12 @@ class VoteGroup(Persistent):
     title = ""
     description = ""
 
-    def __init__(self, name, title="", description="", members=(), assignments=None):
+    def __init__(self, name, title="", description="", members=()):
         self.name = name
         self.title = title
         self.description = description
         self.members = OOSet(members)
-        self.assignments = OOBTree(assignments or {})
+        self.assignments = OOBTree({})
 
     def get_users_with_role(self, role):
         return [m['user'] for m in self.members if m['role'] == role]
@@ -116,6 +122,17 @@ class VoteGroup(Persistent):
     @property
     def observers(self):
         return self.get_users_with_role('observer')
+
+    def has_user(self, user):
+        for member in self.members:
+            if member['user'] == user:
+                return True
+        return False
+
+    def get_primary_for(self, user):
+        for k, v in self.assignments.items():
+            if v == user:
+                return k
 
 
 class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
