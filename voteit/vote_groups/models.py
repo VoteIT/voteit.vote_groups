@@ -48,8 +48,7 @@ class VoteGroups(object):
     def get_voters(self):
         voter_rights = set()
         for grp in self.values():
-            voter_rights.update(list(grp.assignments.values()))
-            voter_rights.update(filter(lambda uid: uid not in grp.assignments, grp.primaries))
+            voter_rights.update(grp.get_voters())
         return voter_rights
 
     def get_primaries(self, exclude_group=None):
@@ -122,6 +121,12 @@ class VoteGroup(Persistent):
     @property
     def observers(self):
         return self.get_users_with_role('observer')
+
+    def get_voters(self):
+        return set(
+            list(self.assignments.values()) +
+            filter(lambda uid: uid not in self.assignments, self.primaries)
+        )
 
     def has_user(self, user):
         for member in self.members:

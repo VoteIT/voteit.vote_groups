@@ -60,12 +60,16 @@ class VoteGroupsView(BaseView):
     def release_standin(self):
         """ Release stand-in
         """
-        # TODO Check permission
         _check_ongoing_poll(self)
 
         group_name = self.request.GET.get('vote_group')
         group = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)[group_name]
         primary = self.request.GET.get('primary')
+
+        if not self.request.is_moderator and \
+           self.request.authenticated_userid != primary:
+            raise HTTPForbidden(_("You do not have authorization to change voter rights."))
+
         del group.assignments[primary]
 
         url = self.request.resource_url(self.context, 'vote_groups')
@@ -140,6 +144,9 @@ class DeleteVoteGroupForm(DefaultDeleteForm):
         super(DeleteVoteGroupForm, self).__init__(context, request)
         _check_ongoing_poll(self)
 
+        if not request.is_moderator:
+            raise HTTPForbidden(_("You do not have authorization to delete groups."))
+
     def delete_success(self, appstruct):
         msg = _("Deleted '${title}'",
                 mapping={'title': self.vote_groups[self.group_name].title})
@@ -160,7 +167,6 @@ class DeleteVoteGroupForm(DefaultDeleteForm):
 class AssignVoteForm(DefaultEditForm):
     """ Assign vote to stand-in.
     """
-    # TODO Check permission
     type_name = 'VoteGroup'
 
     @property
@@ -205,6 +211,11 @@ class AssignVoteForm(DefaultEditForm):
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
         _check_ongoing_poll(self)
+
+        if not request.is_moderator and \
+           request.authenticated_userid not in self.group.assignments.values() and \
+           request.authenticated_userid not in self.group.primaries:
+            raise HTTPForbidden(_("You do not have authorization to change voter rights."))
 
     def save_success(self, appstruct):
         self.group.assignments[self.for_user] = appstruct['standin']
