@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from UserDict import IterableUserDict
 from persistent import Persistent
 from uuid import uuid4
 
@@ -96,16 +97,26 @@ class VoteGroups(object):
 
 
 @implementer(IVoteGroup)
-class VoteGroup(Persistent):
+class VoteGroup(Persistent, IterableUserDict):
     title = ""
     description = ""
 
-    def __init__(self, name, title="", description="", members=()):
+    def __init__(self, name, title="", description=""):
         self.name = name
         self.title = title
         self.description = description
-        self.members = OOSet(members)
-        self.assignments = OOBTree({})
+        #FIXME: Structure
+        #Use userid as key and role as value, or none
+        self.data = OOBTree()
+        #Assigned
+        self.assignments = OOBTree()
+        #Potential members - simply list emails
+        self.potential_members = OOSet()
+
+    def get_roles(self, role):
+        for (k, v) in self.items():
+            if v == role:
+                yield k
 
     def get_users_with_role(self, role, emails=True):
         return [m['user'] or m['email'] for m in self.members if m['role'] == role and (emails or m['user'])]
