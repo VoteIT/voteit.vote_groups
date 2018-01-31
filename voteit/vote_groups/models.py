@@ -64,7 +64,7 @@ class VoteGroups(object):
         return filter(lambda g: g.has_user(user), self.sorted())
 
     def get_free_standins(self, group):
-        return set(group.standins).difference(self.get_voters())
+        return set(group.standin_users).difference(self.get_voters())
 
     def get(self, name, default=None):
         return self.context.__vote_groups__.get(name, default)
@@ -107,8 +107,8 @@ class VoteGroup(Persistent):
         self.members = OOSet(members)
         self.assignments = OOBTree({})
 
-    def get_users_with_role(self, role):
-        return [m['user'] for m in self.members if m['role'] == role]
+    def get_users_with_role(self, role, emails=True):
+        return [m['user'] or m['email'] for m in self.members if m['role'] == role and (emails or m['user'])]
 
     @property
     def primaries(self):
@@ -117,6 +117,10 @@ class VoteGroup(Persistent):
     @property
     def standins(self):
         return self.get_users_with_role('standin')
+
+    @property
+    def standin_users(self):
+        return self.get_users_with_role('standin', emails=False)
 
     @property
     def observers(self):

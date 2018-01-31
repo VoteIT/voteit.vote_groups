@@ -76,8 +76,8 @@
         </thead>
         <tbody>
           <tr tal:repeat="userid vote_group.primaries">
-            <td>
-              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            <td tal:define="user request.creators_info([userid], portrait = False).strip()">
+              <a tal:replace="structure user or userid">Userid</a>
             </td>
             <td>
               <a tal:condition="userid in vote_group.assignments"
@@ -111,8 +111,8 @@
         </thead>
         <tbody>
           <tr tal:repeat="userid vote_group.standins">
-            <td>
-              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            <td tal:define="user request.creators_info([userid], portrait = False).strip()">
+              <a tal:replace="structure user or userid">Userid</a>
               <a tal:condition="userid == request.authenticated_userid and userid in vote_group.assignments.values() and has_standins"
                  href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': vote_group.get_primary_for(userid)})}"
                  class="btn btn-default pull-right"

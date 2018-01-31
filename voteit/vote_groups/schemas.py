@@ -76,7 +76,7 @@ class VoteGroupValidator(object):
         standins = self.get_users_with_role(value['members'], 'standin')
 
         # Users can only have one role in a group.
-        all_members = [m['user'] for m in value['members']]
+        all_members = [m['user'] or m['email'] for m in value['members']]
         non_unique = set([u for u in all_members if all_members.count(u) > 1])
         if non_unique:
             exc['members'] = _('User(s) ${users} have more than one role in this group.',
