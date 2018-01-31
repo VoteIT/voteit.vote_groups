@@ -5,7 +5,6 @@ import colander
 import deform
 from arche.schemas import userid_hinder_widget
 from arche.validators import existing_userids
-from arche.widgets import Html5InputWidget
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPNotFound
 
@@ -32,7 +31,6 @@ class MemberSchema(colander.Schema):
     email = colander.SchemaNode(
         colander.String(),
         title=_("Associate with email"),
-        widget=Html5InputWidget(input_type='email'),
         validator=colander.Email(),
         missing='',
     )
