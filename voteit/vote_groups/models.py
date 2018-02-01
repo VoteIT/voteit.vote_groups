@@ -42,8 +42,8 @@ class VoteGroups(object):
 
     def get_members(self):
         members = set()
-        for grp in self.values():
-            members.update([m['user'] for m in grp.members])
+        for group in self.values():
+            members.update(group.keys())
         return members
 
     def get_voters(self):
@@ -61,11 +61,11 @@ class VoteGroups(object):
     def sorted(self):
         return sorted(self.values(), key=lambda g: g.title.lower())
 
-    def vote_groups_for_user(self, user):
-        return filter(lambda g: g.has_user(user), self.sorted())
+    def vote_groups_for_user(self, userid):
+        return filter(lambda g: userid in g, self.sorted())
 
     def get_free_standins(self, group):
-        return set(group.standin_users).difference(self.get_voters())
+        return set(group.standins).difference(self.get_voters())
 
     def get(self, name, default=None):
         return self.context.__vote_groups__.get(name, default)
@@ -118,36 +118,23 @@ class VoteGroup(Persistent, IterableUserDict):
             if v == role:
                 yield k
 
-    def get_users_with_role(self, role, emails=True):
-        return [m['user'] or m['email'] for m in self.members if m['role'] == role and (emails or m['user'])]
-
     @property
     def primaries(self):
-        return self.get_users_with_role('primary')
+        return self.get_roles('primary')
 
     @property
     def standins(self):
-        return self.get_users_with_role('standin')
-
-    @property
-    def standin_users(self):
-        return self.get_users_with_role('standin', emails=False)
+        return self.get_roles('standin')
 
     @property
     def observers(self):
-        return self.get_users_with_role('observer')
+        return self.get_roles('observer')
 
     def get_voters(self):
         return set(
             list(self.assignments.values()) +
             filter(lambda uid: uid not in self.assignments, self.primaries)
         )
-
-    def has_user(self, user):
-        for member in self.members:
-            if member['user'] == user:
-                return True
-        return False
 
     def get_primary_for(self, user):
         for k, v in self.assignments.items():
@@ -166,7 +153,7 @@ class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
             request = get_current_request()
         meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
         groups = IVoteGroups(self.context)
-        return frozenset(groups.get_members().intersection(meeting_presence.present_userids))
+        return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
 
 
 def includeme(config):

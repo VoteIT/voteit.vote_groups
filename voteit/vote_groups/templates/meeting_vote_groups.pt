@@ -43,8 +43,11 @@
   </div>
   <br/><br/>
   <div class="list-group">
-    <div class="list-group-item"
-         tal:repeat="vote_group sorted_groups">
+    <form method="post"
+          action="${request.resource_path(context, '__vote_group_save_roles__', query = {'vote_group': vote_group.name})}"
+          class="list-group-item"
+          data-roles-container
+          tal:repeat="vote_group sorted_groups">
       <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group)">
 
       <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
@@ -58,6 +61,17 @@
              i18n:translate="">
               Edit
           </a>
+          <button class="btn btn-default"
+             data-edit-roles
+             i18n:translate="">
+              Change roles
+          </button>
+          <button class="btn btn-primary"
+             href=""
+             data-save-roles
+             i18n:translate="">
+              Save roles
+          </button>
           <a class="btn btn-default"
              href="${request.resource_url(context, 'delete_vote_group', query = {'vote_group': vote_group.name})}"
              i18n:translate="">
@@ -68,18 +82,24 @@
       <table class="table table-striped">
         <thead>
           <tr>
-            <th i18n:translate="">
-                <tal:trans i18n:name="member_count" tal:content="len(vote_group.primaries)">1</tal:trans>
-                primaries</th>
+            <th i18n:translate="">Member</th>
+            <th i18n:translate="">Role</th>
             <th i18n:translate="">Stand-in</th>
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="userid vote_group.primaries">
-            <td tal:define="user request.creators_info([userid], portrait = False).strip()">
-              <a tal:replace="structure user or userid">Userid</a>
+          <tr tal:repeat="(userid, role) vote_group.items()">
+            <td>
+              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
+            </td>
+            <td data-select-roles>
+                <select name="${userid}">
+                    <option tal:repeat="(value, desc) role_choices" value="${value}" tal:attributes="selected role==value">${desc}</option>
+                </select>
+                <span>${[c for c in role_choices if c[0]==role][0][1]}</span>
             </td>
             <td>
+              <tal:if condition="role == 'primary'">
               <a tal:condition="userid in vote_group.assignments"
                  tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
               <tal:actions tal:condition="request.is_moderator or request.authenticated_userid == userid">
@@ -95,56 +115,14 @@
                    href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}"
                    i18n:translate="">Release stand-in</a>
               </tal:actions>
+              </tal:if>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th i18n:translate="">
-              <tal:trans i18n:name="member_count" tal:content="len(vote_group.standins)">1</tal:trans>
-              stand-in(s)
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr tal:repeat="userid vote_group.standins">
-            <td tal:define="user request.creators_info([userid], portrait = False).strip()">
-              <a tal:replace="structure user or userid">Userid</a>
-              <a tal:condition="userid == request.authenticated_userid and userid in vote_group.assignments.values() and has_standins"
-                 href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': vote_group.get_primary_for(userid)})}"
-                 class="btn btn-default pull-right"
-                 i18n:translate="">Choose stand-in</a>
-              <a tal:condition="userid == request.authenticated_userid and userid in vote_group.assignments.values() and not has_standins"
-                 href="#"
-                 class="btn btn-default pull-right disabled"
-                 i18n:translate="">No stand-ins available</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table class="table table-striped" tal:condition="vote_group.observers">
-        <thead>
-          <tr>
-            <th i18n:translate="">
-              <tal:trans i18n:name="member_count" tal:content="len(vote_group.observers)">1</tal:trans>
-              observer(s)
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr tal:repeat="userid vote_group.observers">
-            <td>
-              <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </tal:group>
-    </div><!-- list-group-item -->
+    </form><!-- list-group-item -->
   </div>
   </div>
 </body>
