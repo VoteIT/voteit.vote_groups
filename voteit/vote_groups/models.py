@@ -7,7 +7,9 @@ from uuid import uuid4
 
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
+from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
+from six import string_types
 from voteit.core.models.interfaces import IMeeting
 from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
 from voteit.irl.models.interfaces import IMeetingPresence
@@ -22,17 +24,23 @@ from voteit.vote_groups.interfaces import IVoteGroups
 #FIXME: Use IterableUserDict from standardlib + import IDict for ifaces
 @implementer(IVoteGroups)
 @adapter(IMeeting)
-class VoteGroups(object):
+class VoteGroups(IterableUserDict):
     """ See .interfaces.IVoteGroups """
 
     def __init__(self, context):
         self.context = context
-        if not hasattr(self.context, '__vote_groups__'):
-            self.context.__vote_groups__ = OOBTree()
+
+    @reify
+    def data(self):
+        try:
+            return self.context._vote_groups
+        except AttributeError:
+            self.context._vote_groups = OOBTree()
+            return self.context._vote_groups
 
     def new(self):
         name = unicode(uuid4())
-        self.context.__vote_groups__[name] = VoteGroup(name)
+        self[name] = VoteGroup(name)
         return name
 
     def get_standin_for(self, userid):
@@ -67,29 +75,9 @@ class VoteGroups(object):
     def get_free_standins(self, group):
         return set(group.standins).difference(self.get_voters())
 
-    def get(self, name, default=None):
-        return self.context.__vote_groups__.get(name, default)
-
-    def __getitem__(self, name):
-        return self.context.__vote_groups__[name]
-
-    def __delitem__(self, name):
-        del self.context.__vote_groups__[name]
-
-    def __len__(self):
-        return len(self.context.__vote_groups__)
-
-    def keys(self):
-        return self.context.__vote_groups__.keys()
-
-    def __iter__(self):
-        return iter(self.keys())
-
-    def values(self):
-        return self.context.__vote_groups__.values()
-
-    def items(self):
-        return self.context.__vote_groups__.items()
+    def __setitem__(self, key, value):
+        assert IVoteGroup.providedBy(value)
+        self.data[key] = value
 
     def __nonzero__(self):
         """ This object should be "true" even if it has no content. """
@@ -136,9 +124,10 @@ class VoteGroup(Persistent, IterableUserDict):
             filter(lambda uid: uid not in self.assignments, self.primaries)
         )
 
-    def get_primary_for(self, user):
+    def get_primary_for(self, userid):
+        assert isinstance(userid, string_types)
         for k, v in self.assignments.items():
-            if v == user:
+            if v == userid:
                 return k
 
 

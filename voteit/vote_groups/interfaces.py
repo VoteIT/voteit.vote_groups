@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from pyramid.interfaces import IDict
 from zope.interface import Interface
 from zope.interface import Attribute
 
 
-class IVoteGroups(Interface):
+class IVoteGroups(IDict):
     """ An adapter that handles meeting vote groups. Adapts a meeting.
         Implements a dict-like interface to handle VoteGroup objects.
     """
@@ -29,13 +30,26 @@ class IVoteGroups(Interface):
         """ Return set with free stand-ins for vote group """
 
 
-class IVoteGroup(Interface):
+class IVoteGroup(IDict):
     """ A meeting delegation. Handled by IVoteGroups adapter.
     """
     name = Attribute("Name of the interface. Used to fetch this object from the IVoteGroups adapter.")
     title = Attribute("Title of delegation.")
-    members = Attribute("Members in this group.")
+    description = Attribute("Description")
     assignments = Attribute("Votes assigned from a primary voter to a standin.")
+    potential_members = Attribute("Persistent set of email addresses.")
+    primaries = Attribute("Primary representatives")
+    standins = Attribute("Standins, iterator")
+    observers = Attribute("Observers, iterator")
 
-    def __init__(name, title="", description="", members=()):
+    def __init__(name, title="", description=""):
         """ Constructor, normally not passed any values within this app. """
+
+    def get_roles(role):
+        """ Return userids with role"""
+
+    def get_voters():
+        """ Return voters"""
+
+    def get_primary_for(userid):
+        """ Who made this userid a voter? """
