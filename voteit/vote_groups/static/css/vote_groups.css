@@ -1,0 +1,14 @@
+[data-roles-container] [data-save-roles] {
+  display: none; }
+[data-roles-container] [data-select-roles] select {
+  display: none; }
+[data-roles-container].editing [data-save-roles] {
+  display: inline-block; }
+[data-roles-container].editing [data-edit-roles] {
+  display: none; }
+[data-roles-container].editing [data-select-roles] select {
+  display: inline-block; }
+[data-roles-container].editing [data-select-roles] span {
+  display: none; }
+
+/*# sourceMappingURL=vote_groups.css.map */

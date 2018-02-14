@@ -1,0 +1,7 @@
+{
+"version": 3,
+"mappings": "AACI,wCAAiB;EACb,OAAO,EAAE,IAAI;AAGb,iDAAM;EACF,OAAO,EAAE,IAAI;AAGjB,gDAAiB;EACb,OAAO,EAAE,YAAY;AACzB,gDAAiB;EACb,OAAO,EAAE,IAAI;AAGb,yDAAM;EACF,OAAO,EAAE,YAAY;AACzB,uDAAI;EACA,OAAO,EAAE,IAAI",
+"sources": ["../sass/vote_groups.sass"],
+"names": [],
+"file": "vote_groups.css"
+}
