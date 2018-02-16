@@ -44,9 +44,9 @@ class VoteGroups(IterableUserDict):
         return name
 
     def get_standin_for(self, userid):
-        for delegation in self.values():
-            if userid in delegation.members:
-                return delegation
+        for group in self.values():
+            if userid in group.assignments:
+                return group.assignments[userid]
 
     def get_members(self):
         members = set()
@@ -145,6 +145,6 @@ class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
         return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
 
 
-def includeme(config):
+def includeme(config):  # pragma: no cover
     config.registry.registerAdapter(VoteGroups)
     config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)
