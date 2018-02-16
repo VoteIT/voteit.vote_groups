@@ -17,9 +17,9 @@ from voteit.core.models.interfaces import IMeeting
 
 from voteit.vote_groups import _
 from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.mixins import VoteGroupEditMixin
 from voteit.vote_groups.schemas import AssignVoteSchema
 from voteit.vote_groups.schemas import ROLE_CHOICES
-from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 from voteit.core.views.control_panel import control_panel_category, control_panel_link
 
@@ -37,10 +37,6 @@ def _check_ongoing_poll(view):
 
 
 class VoteGroupsView(BaseView, VoteGroupEditMixin):
-
-    @reify
-    def vote_groups(self):
-        return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
 
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
@@ -186,7 +182,7 @@ class DeleteVoteGroupForm(DefaultDeleteForm, VoteGroupEditMixin):
 
     def delete_success(self, appstruct):
         msg = _("Deleted '${title}'",
-                mapping={'title': self.vote_groups[self.group_name].title})
+                mapping={'title': self.group.title})
         self.flash_messages.add(msg, type='warning')
         del self.vote_groups[self.group_name]
         url = self.request.resource_url(self.context, 'vote_groups')
@@ -212,7 +208,7 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
                  default="Choose stand-in for ${user} (${vote_group_title})",
                  mapping={
                      'user': self.for_user,
-                     'vote_group_title': self.vote_groups[self.group_name].title})
+                     'vote_group_title': self.group.title})
 
     @reify
     def for_user(self):
@@ -235,7 +231,6 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
         _check_ongoing_poll(self)
-
         if not request.is_moderator and \
            request.authenticated_userid not in self.group.assignments.values() and \
            request.authenticated_userid not in self.group.primaries:

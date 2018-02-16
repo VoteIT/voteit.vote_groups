@@ -8,6 +8,7 @@ from voteit.vote_groups.interfaces import IVoteGroups
 
 
 class VoteGroupEditMixin(object):
+
     @reify
     def vote_groups(self):
         return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
@@ -15,10 +16,13 @@ class VoteGroupEditMixin(object):
     @reify
     def group_name(self):
         try:
-            return self.request.GET.get('vote_group')
+            return self.request.GET['vote_group']
         except KeyError:
             raise HTTPNotFound()
 
     @reify
     def group(self):
-        return self.vote_groups[self.group_name]
+        try:
+            return self.vote_groups[self.group_name]
+        except KeyError:
+            raise HTTPNotFound()
