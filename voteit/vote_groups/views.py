@@ -49,15 +49,13 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
         vote_groups_all.need()
-        sorted_groups = self.request.is_moderator and \
-                        self.vote_groups.sorted() or \
-                        self.vote_groups.vote_groups_for_user(self.request.authenticated_userid)
+        show_all = self.request.GET.get('show_all') == '1'
         response = {
-            'all_count': len(self.vote_groups),
             'vote_groups': self.vote_groups,
-            'sorted_groups': sorted_groups,
+            'my_groups': self.vote_groups.vote_groups_for_user(self.request.authenticated_userid),
             'role_choices': ROLE_CHOICES,
             'has_qr': IPresenceQR is not None,
+            'show_all': show_all,
         }
         return response
 

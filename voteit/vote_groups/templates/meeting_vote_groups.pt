@@ -33,28 +33,30 @@
         Apply vote rights
     </a>
 
-    <tal:delegation_controls condition="not request.is_moderator">
-      <a class="buttonize"
+    <tal:delegation_controls condition="not request.is_moderator and len(vote_groups) > len(my_groups)">
+      <a class="btn btn-default"
          tal:condition="show_all"
-         href="${request.resource_url(context, 'vote_groups')}"
+         href="${request.resource_path(context, 'vote_groups')}"
          i18n:translate="">
-          Hide <tal:ts i18n:name="count">${all_count - len(my_delegations)}</tal:ts> other delegations
+          <span class="glyphicon glyphicon-eye-close"></span>
+          Show my groups (<tal:ts i18n:name="count">${len(my_groups)}</tal:ts>)
       </a>
-      <a class="buttonize"
+      <a class="btn btn-default"
          tal:condition="not show_all"
-         href="${request.resource_url(context, 'vote_groups', query = {'show_all': '1'})}"
+         href="${request.resource_path(context, 'vote_groups', query = {'show_all': '1'})}"
          i18n:translate="">
-          Show <tal:ts i18n:name="count">${all_count - len(my_delegations)}</tal:ts> other delegations
+          <span class="glyphicon glyphicon-eye-open"></span>
+          Show all groups (<tal:ts i18n:name="count">${len(vote_groups)}</tal:ts>)
       </a>
     </tal:delegation_controls>
   </div>
   <br/><br/>
-  <div class="list-group">
+  <div class="list-group" tal:define="groups (request.is_moderator or show_all) and vote_groups.sorted() or my_groups">
     <form method="post"
           action="${request.resource_path(context, '__vote_group_save_roles__', query = {'vote_group': vote_group.name})}"
           class="list-group-item"
           data-roles-container
-          tal:repeat="vote_group sorted_groups">
+          tal:repeat="vote_group groups">
       <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group)">
 
       <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
