@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from arche.views.base import BaseForm
 from arche.views.base import BaseView
 from arche.views.base import DefaultDeleteForm
 from arche.views.base import DefaultEditForm
@@ -14,6 +15,14 @@ from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
 from voteit.core.views.control_panel import control_panel_category
 from voteit.core.views.control_panel import control_panel_link
+try:
+    from voteit.qr.interfaces import IPresenceQR
+except ImportError:
+    IPresenceQR = None
+try:
+    from voteit.irl.models.interfaces import IElectoralRegister
+except ImportError:
+    IElectoralRegister = None
 
 from voteit.vote_groups import _
 from voteit.vote_groups.fanstaticlib import vote_groups_all
@@ -48,6 +57,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
             'vote_groups': self.vote_groups,
             'sorted_groups': sorted_groups,
             'role_choices': ROLE_CHOICES,
+            'has_qr': IPresenceQR is not None,
         }
         return response
 
@@ -235,6 +245,62 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
         return HTTPFound(location=url)
 
 
+@view_config(name="_qr_voter_groups",
+             context=IMeeting,
+             permission=security.MODERATE_MEETING,
+             renderer="arche:templates/form.pt")
+class ApplyQRPermissionsForm(BaseForm):
+    """ Apply permissions """
+    type_name = 'VoteGroup'
+    schema_name = 'apply_qr_present'
+    title = _("Apply voting rights according to groups + checked in?")
+
+    def __call__(self):
+        if IPresenceQR is None:
+            self.flash_messages.add(_("voteit.qr not installed"), type='danger')
+            raise HTTPFound(location=self.request.resource_url(self.context))
+        try:
+            _check_ongoing_poll(self)
+        except HTTPForbidden:
+            #OK for admins to override here
+            self.flash_messages.add(_("Note! Polls ongoing within meeting!"), type='danger')
+        return super(ApplyQRPermissionsForm, self).__call__()
+
+    def update_electoral_register(self):
+        if IElectoralRegister is None:
+            self.flash_messages.add(
+                _("voteit.irl not installed, so electoral register doesn't exist."),
+                type='danger'
+            )
+        else:
+            er = IElectoralRegister(self.context)
+            userids = er.currently_set_voters()
+            er.new_register(userids)
+
+    def save_success(self, appstruct):
+        groups = IVoteGroups(self.context)
+        qr = IPresenceQR(self.context)
+        new_voters = groups.get_voters().intersection(qr)
+        current_voters = security.find_role_userids(self.context, security.ROLE_VOTER)
+        removed_voters = current_voters - new_voters
+        added_voters = new_voters - current_voters
+        for userid in removed_voters:
+            self.context.del_groups(userid, (security.ROLE_VOTER,))
+        for userid in added_voters:
+            self.context.add_groups(userid, (security.ROLE_VOTER,))
+        msg = _("updated_voter_permissions_notice",
+                default = "Total voters: ${total}. Added ${added_count} new and removed ${removed_count}.",
+                mapping = {
+                    'total': len(new_voters),
+                    'added_count': len(added_voters),
+                    'removed_count': len(removed_voters)
+                })
+        self.flash_messages.add(msg)
+        if appstruct['update_register']:
+            self.update_electoral_register()
+        return HTTPFound(location=self.request.resource_url(self.context))
+
+
 def vote_groups_active(context, request, va):
     vote_groups = request.registry.queryAdapter(request.meeting, IVoteGroups)
     if vote_groups:
@@ -259,3 +325,10 @@ def includeme(config):
         title=_("Manage vote groups"),
         view_name='vote_groups',
     )
+    if IPresenceQR is not None:
+        config.add_view_action(
+            control_panel_link,
+            'control_panel_vote_groups', 'apply_qr_present',
+            title=_("Apply present"),
+            view_name='_qr_voter_groups',
+        )

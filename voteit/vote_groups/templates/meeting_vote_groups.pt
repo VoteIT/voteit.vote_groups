@@ -25,6 +25,13 @@
         <span class="glyphicon glyphicon-print"></span>
         Print
     </a>
+    <a class="btn btn-default"
+       tal:condition="has_qr and request.is_moderator"
+       href="${request.resource_url(context, '_qr_voter_groups')}"
+       i18n:translate="">
+        <span class="glyphicon glyphicon-qrcode"></span>
+        Apply vote rights
+    </a>
 
     <tal:delegation_controls condition="not request.is_moderator">
       <a class="buttonize"

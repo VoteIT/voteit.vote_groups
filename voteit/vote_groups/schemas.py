@@ -80,5 +80,15 @@ class AssignVoteSchema(colander.Schema):
     )
 
 
+class ApplyQRPresentVotersSchema(colander.Schema):
+    update_register = colander.SchemaNode(
+        colander.Bool(),
+        title = _("Update electoral register too?"),
+        default = True,
+    )
+
+
+
 def includeme(config):
     config.add_schema('VoteGroup', EditVoteGroupSchema, 'edit')
+    config.add_schema('VoteGroup', ApplyQRPresentVotersSchema, 'apply_qr_present')
