@@ -1,0 +1,224 @@
+#
+# Swedish translations for PACKAGE package
+# This file is distributed under the same license as the PACKAGE package.
+# Robin Harms Oredsson <robin@betahaus.net>, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE 1.0\n"
+"POT-Creation-Date: 2018-02-21 14:52+0100\n"
+"PO-Revision-Date: 2018-02-21 14:52+0100\n"
+"Last-Translator: Robin Harms Oredsson <robin@betahaus.net>\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Lingua 4.13\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: voteit/vote_groups/schemas.py:16
+msgid "Primary"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:17
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:96
+msgid "Stand-in"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:18
+msgid "Observer"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:33
+#, python-format
+msgid "Cannot remove user(s) ${users} with transferred voter permission."
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:41
+msgid "Title"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:45
+msgid "Description"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:53
+msgid "Username"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:54
+msgid "User"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:55
+msgid "Start typing a userid"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:62
+msgid "Emails of potential members"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:63
+msgid "Add one per row"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:86
+msgid "Update electoral register too?"
+msgstr ""
+
+#: voteit/vote_groups/schemas.py:87
+msgid "Will only update if a new one is needed."
+msgstr ""
+
+#. Default: During ongoing polls, this action isn't allowed. Try again when
+#. polls have closed.
+#: voteit/vote_groups/views.py:42
+msgid "access_during_ongoing_not_allowed"
+msgstr ""
+
+#: voteit/vote_groups/views.py:83 voteit/vote_groups/views.py:234
+msgid "You do not have authorization to change voter rights."
+msgstr ""
+
+#: voteit/vote_groups/views.py:110
+#, python-format
+msgid "Can not change role for user(s) ${users} with assigned voter rights."
+msgstr ""
+
+#: voteit/vote_groups/views.py:117
+#, python-format
+msgid "User(s) ${users} are already primary in another group."
+msgstr ""
+
+#: voteit/vote_groups/views.py:139
+msgid "Edit vote group"
+msgstr ""
+
+#. Default: Really delete vote group '${vote_group_title}'? This can't be
+#. undone
+#: voteit/vote_groups/views.py:169
+msgid "really_delete_vote_group_warning"
+msgstr ""
+
+#: voteit/vote_groups/views.py:178
+msgid "You do not have authorization to delete groups."
+msgstr ""
+
+#: voteit/vote_groups/views.py:181
+#, python-format
+msgid "Deleted '${title}'"
+msgstr ""
+
+#. Default: Choose stand-in for ${user} (${vote_group_title})
+#: voteit/vote_groups/views.py:204
+msgid "vote_assignment"
+msgstr ""
+
+#: voteit/vote_groups/views.py:254
+msgid "Apply voting rights according to groups + checked in?"
+msgstr ""
+
+#: voteit/vote_groups/views.py:258
+msgid "voteit.qr not installed"
+msgstr ""
+
+#: voteit/vote_groups/views.py:264
+msgid "Note! Polls ongoing within meeting!"
+msgstr ""
+
+#: voteit/vote_groups/views.py:270
+msgid "voteit.irl not installed, so electoral register doesn't exist."
+msgstr ""
+
+#. Default: Total voters: ${total}. Added ${added_count} new and removed
+#. ${removed_count}.
+#: voteit/vote_groups/views.py:290
+msgid "updated_voter_permissions_notice"
+msgstr ""
+
+#: voteit/vote_groups/views.py:316
+msgid "Vote groups"
+msgstr ""
+
+#: voteit/vote_groups/views.py:317
+msgid "Handle voter rights with vote groups."
+msgstr ""
+
+#: voteit/vote_groups/views.py:324
+msgid "Manage vote groups"
+msgstr ""
+
+#: voteit/vote_groups/views.py:331
+msgid "Apply present"
+msgstr ""
+
+#: voteit/vote_groups/plugins/meeting_presence.py:11
+msgid "Present with group voter rights."
+msgstr ""
+
+#. Default: Will set voter rights for present user according to vote groups
+#. settings.
+#: voteit/vote_groups/plugins/meeting_presence.py:12
+msgid "present_with_vote_groups_description"
+msgstr ""
+
+#. Default: Vote groups
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:9
+msgid "meeting_vote_groups_header"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:17
+msgid "<dynamic element> New vote group"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:24
+msgid "<dynamic element> Print"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:31
+msgid "<dynamic element> Apply vote rights"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:40
+msgid "<dynamic element> Show my groups (${count})"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:47
+msgid "<dynamic element> Show all groups (${count})"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:70
+msgid "Edit"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:75
+msgid "Change roles"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:81
+msgid "Save roles"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:86
+msgid "Delete"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:94
+msgid "Member"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:95
+msgid "Role"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:118
+msgid "Choose stand-in"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:121
+msgid "No stand-ins available"
+msgstr ""
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:125
+msgid "Release stand-in"
+msgstr ""
