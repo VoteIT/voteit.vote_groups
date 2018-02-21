@@ -84,6 +84,7 @@ class ApplyQRPresentVotersSchema(colander.Schema):
     update_register = colander.SchemaNode(
         colander.Bool(),
         title = _("Update electoral register too?"),
+        description = _("Will only update if a new one is needed."),
         default = True,
     )
 

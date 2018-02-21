@@ -272,8 +272,9 @@ class ApplyQRPermissionsForm(BaseForm):
             )
         else:
             er = IElectoralRegister(self.context)
-            userids = er.currently_set_voters()
-            er.new_register(userids)
+            if er.new_register_needed():
+                userids = er.currently_set_voters()
+                er.new_register(userids)
 
     def save_success(self, appstruct):
         groups = IVoteGroups(self.context)
