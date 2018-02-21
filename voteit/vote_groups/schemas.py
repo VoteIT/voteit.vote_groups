@@ -4,45 +4,19 @@ from __future__ import unicode_literals
 import colander
 import deform
 from arche.schemas import userid_hinder_widget
-from arche.validators import existing_userids, ExistingUserIDs
-from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPNotFound
+from arche.validators import existing_userids
+from voteit.core.schemas.common import strip_and_lowercase
+from voteit.core.validators import multiple_email_validator
 
 from voteit.vote_groups import _
-from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
+
 
 ROLE_CHOICES = (
     ('primary', _('Primary')),
     ('standin', _('Stand-in')),
     ('observer', _('Observer')),
 )
-
-
-# class MemberSchema(colander.Schema):
-#     user = colander.SchemaNode(
-#         colander.String(),
-#         title=_("Username"),
-#         description=_("Start typing a userid"),
-#         widget=userid_hinder_widget,
-#         validator=existing_userids,
-#         missing='',
-#     )
-#     email = colander.SchemaNode(
-#         colander.String(),
-#         title=_("Associate with email"),
-#         validator=colander.Email(),
-#         missing='',
-#     )
-#     role = colander.SchemaNode(
-#         colander.String(),
-#         title=_('Role'),
-#         widget=deform.widget.SelectWidget(values=ROLE_CHOICES),
-#     )
-#
-#
-# class MembersSequence(colander.SequenceSchema):
-#     member = MemberSchema(title=_('Member'))
 
 
 @colander.deferred
@@ -52,7 +26,6 @@ class VoteGroupValidator(VoteGroupEditMixin):
 
     def __call__(self, form, value):
         exc = colander.Invalid(form, 'Error when selecting group members')
-
         # Users with transferred voter rights can't be removed.
         in_assigned = set(self.group.assignments.keys() + self.group.assignments.values())
         assigned_removed = in_assigned.difference(set(value['members']))
@@ -84,11 +57,14 @@ class EditVoteGroupSchema(colander.Schema):
             validator=existing_userids,
         )
     )
-    # members = MembersSequence(
-    #     title=_("Vote group members"),
-    #     description=_("Add one UserID per row."),
-    # )
-    # validator = VoteGroupValidator
+    potential_members = colander.SchemaNode(
+        colander.String(),
+        title = _("Emails of potential members"),
+        description = _("Add one per row"),
+        widget=deform.widget.TextAreaWidget(rows=4),
+        preparer=strip_and_lowercase,
+        validator=multiple_email_validator,
+    )
 
 
 @colander.deferred

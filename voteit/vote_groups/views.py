@@ -138,7 +138,8 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
     def appstruct(self):
         return dict(title=self.group.title,
                     description=self.group.description,
-                    members=list(self.group.keys()))
+                    members=list(self.group.keys()),
+                    potential_members="\n".join(self.group.potential_members))
 
     def save_success(self, appstruct):
         group = self.group
@@ -146,11 +147,31 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
         group.description = appstruct['description']
         previous = set(group.keys())
         incoming = set(appstruct['members'])
-        for uid in previous.difference(incoming):
-            del group[uid]
-        for uid in incoming.difference(previous):
-            group[uid] = 'observer'
-        self.flash_messages.add(self.default_success)
+
+        # Find all potential members already registered
+        potential_members = set()
+        found = 0
+
+        for email in appstruct['potential_members'].splitlines():
+            user = self.request.root['users'].get_user_by_email(email, only_validated=True)
+            if user:
+                incoming.add(user.userid)
+                found += 1
+            else:
+                potential_members.add(email)
+        for userid in previous.difference(incoming):
+            del group[userid]
+        for userid in incoming.difference(previous):
+            group[userid] = 'observer'
+        if set(group.potential_members) != potential_members:
+            group.potential_members.clear()
+            group.potential_members.update(potential_members)
+        if found:
+            msg = _("${num} users that had already registered were added as members.",
+                    mapping={'num': found})
+        else:
+            msg = self.default_success
+        self.flash_messages.add(msg)
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
