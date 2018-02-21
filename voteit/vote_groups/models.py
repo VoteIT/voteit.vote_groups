@@ -7,8 +7,11 @@ from uuid import uuid4
 
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
+from arche.interfaces import IEmailValidatedEvent
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
+from pyramid.traversal import find_root
+from repoze.catalog.query import Any, Eq
 from six import string_types
 from voteit.core.models.interfaces import IMeeting
 from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
@@ -83,6 +86,13 @@ class VoteGroups(IterableUserDict):
         """ This object should be "true" even if it has no content. """
         return True
 
+    def email_validated(self, user):
+        if user.email:
+            for group in self.values():
+                if user.email in group.potential_members:
+                    group.potential_members.remove(user.email)
+                    group[user.userid] = 'observer'
+
 
 @implementer(IVoteGroup)
 class VoteGroup(Persistent, IterableUserDict):
@@ -130,6 +140,35 @@ class VoteGroup(Persistent, IterableUserDict):
             if v == userid:
                 return k
 
+    def appstruct(self):
+        return dict(title=self.title,
+                    description=self.description,
+                    members=list(self.keys()),
+                    potential_members="\n".join(self.potential_members))
+
+    def update_from_appstruct(self, appstruct, request):
+        self.title = appstruct['title']
+        self.description = appstruct['description']
+        previous = set(self.keys())
+        incoming = set(appstruct['members'])
+        # Find all potential members already registered
+        potential_members = set()
+        found = 0
+        for email in appstruct['potential_members'].splitlines():
+            user = request.root['users'].get_user_by_email(email, only_validated=True)
+            if user:
+                incoming.add(user.userid)
+                found += 1
+            else:
+                potential_members.add(email)
+        for userid in previous.difference(incoming):
+            del self[userid]
+        for userid in incoming.difference(previous):
+            self[userid] = 'observer'
+        if set(self.potential_members) != potential_members:
+            self.potential_members.clear()
+            self.potential_members.update(potential_members)
+
 
 class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
     name = 'present_with_vote_groups'
@@ -145,6 +184,20 @@ class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
         return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
 
 
+def user_validated_email_subscriber(event):
+    """ Check for potential memberships.
+        This may be slow with a lot of ongoing meetings at the same time.
+    """
+    request = get_current_request()
+    user = event.user
+    query = Eq('type_name', 'Meeting') & Any('workflow_state', ['ongoing', 'upcoming'])
+    docids = request.root.catalog.query(query)[1]
+    for meeting in request.resolve_docids(docids, perm=None):
+        vote_groups = IVoteGroups(meeting, None)
+        vote_groups.email_validated(user.email)
+
+
 def includeme(config):  # pragma: no cover
     config.registry.registerAdapter(VoteGroups)
     config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)
+    config.add_subscriber(user_validated_email_subscriber, IEmailValidatedEvent)
