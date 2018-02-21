@@ -10,12 +10,9 @@ from BTrees.OOBTree import OOSet
 from arche.interfaces import IEmailValidatedEvent
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
-from pyramid.traversal import find_root
 from repoze.catalog.query import Any, Eq
 from six import string_types
 from voteit.core.models.interfaces import IMeeting
-from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
-from voteit.irl.models.interfaces import IMeetingPresence
 from zope.component import adapter
 from zope.interface import implementer
 
@@ -170,20 +167,6 @@ class VoteGroup(Persistent, IterableUserDict):
             self.potential_members.update(potential_members)
 
 
-class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
-    name = 'present_with_vote_groups'
-    title = _("Present with group voter rights.")
-    description = _("present_with_vote_groups_description",
-                    default="Will set voter rights for present user according to vote groups settings.")
-
-    def get_voters(self, request=None, **kw):
-        if request is None:
-            request = get_current_request()
-        meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
-        groups = IVoteGroups(self.context)
-        return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
-
-
 def user_validated_email_subscriber(event):
     """ Check for potential memberships.
         This may be slow with a lot of ongoing meetings at the same time.
@@ -197,7 +180,13 @@ def user_validated_email_subscriber(event):
         vote_groups.email_validated(user.email)
 
 
-def includeme(config):  # pragma: no cover
+def includeme(config):
     config.registry.registerAdapter(VoteGroups)
-    config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)
     config.add_subscriber(user_validated_email_subscriber, IEmailValidatedEvent)
+    try:
+        from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
+        has_irl = True
+    except ImportError:
+        has_irl = True
+    if has_irl:
+        config.include('voteit.vote_groups.plugins.meeting_presence')

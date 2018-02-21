@@ -9,12 +9,13 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
+
 requires = (
     'pyramid',
     'voteit.core',
     'typing',
-    'voteit.irl',
 )
+
 
 setup(
     name='voteit.vote_groups',
