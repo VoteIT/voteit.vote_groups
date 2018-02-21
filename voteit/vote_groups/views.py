@@ -4,24 +4,23 @@ from __future__ import unicode_literals
 from arche.views.base import BaseView
 from arche.views.base import DefaultDeleteForm
 from arche.views.base import DefaultEditForm
-from deform_autoneed import need_lib
 from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPForbidden, HTTPNotFound
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPFound
 from pyramid.traversal import resource_path
 from pyramid.view import view_config
-from voteit.vote_groups.fanstaticlib import vote_groups_js
 
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
+from voteit.core.views.control_panel import control_panel_category
+from voteit.core.views.control_panel import control_panel_link
 
 from voteit.vote_groups import _
+from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 from voteit.vote_groups.schemas import AssignVoteSchema
 from voteit.vote_groups.schemas import ROLE_CHOICES
-
-from voteit.core.views.control_panel import control_panel_category, control_panel_link
 
 
 def _check_ongoing_poll(view):
@@ -40,7 +39,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
 
     @view_config(name="vote_groups", context=IMeeting, renderer="templates/meeting_vote_groups.pt")
     def delegations_view(self):
-        vote_groups_js.need()
+        vote_groups_all.need()
         sorted_groups = self.request.is_moderator and \
                         self.vote_groups.sorted() or \
                         self.vote_groups.vote_groups_for_user(self.request.authenticated_userid)
