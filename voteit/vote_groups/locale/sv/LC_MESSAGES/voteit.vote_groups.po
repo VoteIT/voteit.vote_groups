@@ -6,219 +6,229 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
 "POT-Creation-Date: 2018-02-21 14:52+0100\n"
-"PO-Revision-Date: 2018-02-21 14:52+0100\n"
-"Last-Translator: Robin Harms Oredsson <robin@betahaus.net>\n"
-"Language-Team: Swedish\n"
+"PO-Revision-Date: 2018-02-21 14:27+0000\n"
+"Last-Translator: Weblate Admin <admin@example.com>\n"
+"Language-Team: Swedish <http://example.com/projects/voteit/voteit-"
+"vote_groups/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.16\n"
 "Generated-By: Lingua 4.13\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: voteit/vote_groups/schemas.py:16
 msgid "Primary"
-msgstr ""
+msgstr "Ordinarie"
 
 #: voteit/vote_groups/schemas.py:17
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:96
 msgid "Stand-in"
-msgstr ""
+msgstr "Ersättare"
 
 #: voteit/vote_groups/schemas.py:18
 msgid "Observer"
-msgstr ""
+msgstr "Observatör"
 
 #: voteit/vote_groups/schemas.py:33
 #, python-format
 msgid "Cannot remove user(s) ${users} with transferred voter permission."
-msgstr ""
+msgstr "Kan inte ta bort användare ${users} med överförd rösträtt."
 
 #: voteit/vote_groups/schemas.py:41
 msgid "Title"
-msgstr ""
+msgstr "Titel"
 
 #: voteit/vote_groups/schemas.py:45
 msgid "Description"
-msgstr ""
+msgstr "Beskrivning"
 
 #: voteit/vote_groups/schemas.py:53
 msgid "Username"
-msgstr ""
+msgstr "Användarnamn"
 
 #: voteit/vote_groups/schemas.py:54
 msgid "User"
-msgstr ""
+msgstr "Användare"
 
 #: voteit/vote_groups/schemas.py:55
 msgid "Start typing a userid"
-msgstr ""
+msgstr "Börja skriva ett användarnamn"
 
 #: voteit/vote_groups/schemas.py:62
 msgid "Emails of potential members"
-msgstr ""
+msgstr "E-post till potentiella gruppmedlemmar"
 
 #: voteit/vote_groups/schemas.py:63
 msgid "Add one per row"
-msgstr ""
+msgstr "Lätt till en per rad"
 
 #: voteit/vote_groups/schemas.py:86
 msgid "Update electoral register too?"
-msgstr ""
+msgstr "Vill du även uppdatera röstlängden?"
 
 #: voteit/vote_groups/schemas.py:87
 msgid "Will only update if a new one is needed."
-msgstr ""
+msgstr "Uppdateras bara om en ny behövs."
 
 #. Default: During ongoing polls, this action isn't allowed. Try again when
 #. polls have closed.
 #: voteit/vote_groups/views.py:42
 msgid "access_during_ongoing_not_allowed"
 msgstr ""
+"Detta är inte tillåtet under pågående omröstningar. Försök igen när "
+"omröstningarna avslutats."
 
 #: voteit/vote_groups/views.py:83 voteit/vote_groups/views.py:234
 msgid "You do not have authorization to change voter rights."
-msgstr ""
+msgstr "Du har inte behörighet att ändra rösträtter."
 
 #: voteit/vote_groups/views.py:110
 #, python-format
 msgid "Can not change role for user(s) ${users} with assigned voter rights."
-msgstr ""
+msgstr "Kan inte ändra roll för användare ${users} med överförda rösträtter."
 
 #: voteit/vote_groups/views.py:117
 #, python-format
 msgid "User(s) ${users} are already primary in another group."
-msgstr ""
+msgstr "Användare ${users} är redan ordinarie i annan grupp."
 
 #: voteit/vote_groups/views.py:139
 msgid "Edit vote group"
-msgstr ""
+msgstr "Redigera röstgrupp"
 
 #. Default: Really delete vote group '${vote_group_title}'? This can't be
 #. undone
 #: voteit/vote_groups/views.py:169
 msgid "really_delete_vote_group_warning"
 msgstr ""
+"Är du säker på att du vill radera röstgruppen '${vote_group_title}'? Detta "
+"kan inte ångras."
 
 #: voteit/vote_groups/views.py:178
 msgid "You do not have authorization to delete groups."
-msgstr ""
+msgstr "Du har inte behörighet att radera röstgrupper."
 
 #: voteit/vote_groups/views.py:181
 #, python-format
 msgid "Deleted '${title}'"
-msgstr ""
+msgstr "Raderade '${title}'"
 
 #. Default: Choose stand-in for ${user} (${vote_group_title})
 #: voteit/vote_groups/views.py:204
 msgid "vote_assignment"
-msgstr ""
+msgstr "Välj ersättare för ${user} (${vote_group_title})"
 
 #: voteit/vote_groups/views.py:254
 msgid "Apply voting rights according to groups + checked in?"
-msgstr ""
+msgstr "Tillämpa rösträtt baserat på röstgrupper + incheckade användare?"
 
 #: voteit/vote_groups/views.py:258
 msgid "voteit.qr not installed"
-msgstr ""
+msgstr "voteit.qr är ej installerat"
 
 #: voteit/vote_groups/views.py:264
 msgid "Note! Polls ongoing within meeting!"
-msgstr ""
+msgstr "OBS! Mötet har pågående omröstningar!"
 
 #: voteit/vote_groups/views.py:270
 msgid "voteit.irl not installed, so electoral register doesn't exist."
-msgstr ""
+msgstr "voteit.irl är ej installerat, så röstlängd saknas."
 
 #. Default: Total voters: ${total}. Added ${added_count} new and removed
 #. ${removed_count}.
 #: voteit/vote_groups/views.py:290
 msgid "updated_voter_permissions_notice"
 msgstr ""
+"Antal närvarande med rösträtt: ${total}. Lagt till ${added_count} och tagit "
+"bort ${removed_count}."
 
 #: voteit/vote_groups/views.py:316
 msgid "Vote groups"
-msgstr ""
+msgstr "Röstgrupper"
 
 #: voteit/vote_groups/views.py:317
 msgid "Handle voter rights with vote groups."
-msgstr ""
+msgstr "Hantera rösträtt med röstgrupper."
 
 #: voteit/vote_groups/views.py:324
 msgid "Manage vote groups"
-msgstr ""
+msgstr "Hantera röstgrupper"
 
 #: voteit/vote_groups/views.py:331
 msgid "Apply present"
-msgstr ""
+msgstr "Uppdatera röstlängd"
 
 #: voteit/vote_groups/plugins/meeting_presence.py:11
 msgid "Present with group voter rights."
-msgstr ""
+msgstr "Närvarande med rösträtt från grupper."
 
 #. Default: Will set voter rights for present user according to vote groups
 #. settings.
 #: voteit/vote_groups/plugins/meeting_presence.py:12
 msgid "present_with_vote_groups_description"
 msgstr ""
+"Tilldelar rösträtt till närvarande användare baserat på inställning i "
+"röstgrupper."
 
 #. Default: Vote groups
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:9
 msgid "meeting_vote_groups_header"
-msgstr ""
+msgstr "Röstgrupper"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:17
 msgid "<dynamic element> New vote group"
-msgstr ""
+msgstr "Ny röstgrupp"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:24
 msgid "<dynamic element> Print"
-msgstr ""
+msgstr "Skriv ut"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:31
 msgid "<dynamic element> Apply vote rights"
-msgstr ""
+msgstr "Tillämpa rösträtter"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:40
 msgid "<dynamic element> Show my groups (${count})"
-msgstr ""
+msgstr "Visa mina grupper (${count})"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:47
 msgid "<dynamic element> Show all groups (${count})"
-msgstr ""
+msgstr "Visa alla grupper (${count})"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:70
 msgid "Edit"
-msgstr ""
+msgstr "Redigera"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:75
 msgid "Change roles"
-msgstr ""
+msgstr "Ändra roller"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:81
 msgid "Save roles"
-msgstr ""
+msgstr "Spara roller"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:86
 msgid "Delete"
-msgstr ""
+msgstr "Radera"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:94
 msgid "Member"
-msgstr ""
+msgstr "Medlem"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:95
 msgid "Role"
-msgstr ""
+msgstr "Roll"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:118
 msgid "Choose stand-in"
-msgstr ""
+msgstr "Välj ersättare"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:121
 msgid "No stand-ins available"
-msgstr ""
+msgstr "Inga ersättare tillgängliga"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:125
 msgid "Release stand-in"
-msgstr ""
+msgstr "Återför"
