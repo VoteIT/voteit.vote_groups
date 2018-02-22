@@ -64,6 +64,7 @@ class EditVoteGroupSchema(colander.Schema):
         widget=deform.widget.TextAreaWidget(rows=4),
         preparer=strip_and_lowercase,
         validator=multiple_email_validator,
+        missing="",
     )
 
 
