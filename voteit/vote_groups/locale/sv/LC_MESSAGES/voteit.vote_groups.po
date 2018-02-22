@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
-"POT-Creation-Date: 2018-02-21 14:52+0100\n"
+"POT-Creation-Date: 2018-02-22 15:15+0100\n"
 "PO-Revision-Date: 2018-02-21 14:27+0000\n"
 "Last-Translator: Weblate Admin <admin@example.com>\n"
 "Language-Team: Swedish <http://example.com/projects/voteit/voteit-"
@@ -64,11 +64,11 @@ msgstr "E-post till potentiella gruppmedlemmar"
 msgid "Add one per row"
 msgstr "Lätt till en per rad"
 
-#: voteit/vote_groups/schemas.py:86
+#: voteit/vote_groups/schemas.py:87
 msgid "Update electoral register too?"
 msgstr "Vill du även uppdatera röstlängden?"
 
-#: voteit/vote_groups/schemas.py:87
+#: voteit/vote_groups/schemas.py:88
 msgid "Will only update if a new one is needed."
 msgstr "Uppdateras bara om en ny behövs."
 
@@ -160,18 +160,6 @@ msgstr "Hantera röstgrupper"
 msgid "Apply present"
 msgstr "Uppdatera röstlängd"
 
-#: voteit/vote_groups/plugins/meeting_presence.py:11
-msgid "Present with group voter rights."
-msgstr "Närvarande med rösträtt från grupper."
-
-#. Default: Will set voter rights for present user according to vote groups
-#. settings.
-#: voteit/vote_groups/plugins/meeting_presence.py:12
-msgid "present_with_vote_groups_description"
-msgstr ""
-"Tilldelar rösträtt till närvarande användare baserat på inställning i "
-"röstgrupper."
-
 #. Default: Vote groups
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:9
 msgid "meeting_vote_groups_header"
@@ -232,3 +220,15 @@ msgstr "Inga ersättare tillgängliga"
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:125
 msgid "Release stand-in"
 msgstr "Återför"
+
+#: voteit/vote_groups/plugins/meeting_presence.py:11
+msgid "Present with group voter rights."
+msgstr "Närvarande med rösträtt från grupper."
+
+#. Default: Will set voter rights for present user according to vote groups
+#. settings.
+#: voteit/vote_groups/plugins/meeting_presence.py:12
+msgid "present_with_vote_groups_description"
+msgstr ""
+"Tilldelar rösträtt till närvarande användare baserat på inställning i "
+"röstgrupper."

@@ -13,40 +13,35 @@
   <div class="btn-group hidden-print" role="group">
     <a class="btn btn-default"
        tal:condition="request.is_moderator"
-       href="${request.resource_url(context, 'add_vote_group')}"
-       i18n:translate="">
+       href="${request.resource_url(context, 'add_vote_group')}">
         <span class="glyphicon glyphicon-plus"></span>
-        New vote group
+        <tal:ts i18:translate="">New vote group</tal:ts>
     </a>
     <a class="btn btn-default"
        tal:condition="request.is_moderator"
-       href="javascript:window.print()"
-       i18n:translate="">
+       href="javascript:window.print()">
         <span class="glyphicon glyphicon-print"></span>
-        Print
+        <tal:ts i18:translate="">Print</tal:ts>
     </a>
     <a class="btn btn-default"
        tal:condition="has_qr and request.is_moderator"
-       href="${request.resource_url(context, '_qr_voter_groups')}"
-       i18n:translate="">
+       href="${request.resource_url(context, '_qr_voter_groups')}">
         <span class="glyphicon glyphicon-qrcode"></span>
-        Apply vote rights
+        <tal:ts i18:translate="">Apply vote rights</tal:ts>
     </a>
 
     <tal:delegation_controls condition="not request.is_moderator and len(vote_groups) > len(my_groups)">
       <a class="btn btn-default"
          tal:condition="show_all"
-         href="${request.resource_path(context, 'vote_groups')}"
-         i18n:translate="">
+         href="${request.resource_path(context, 'vote_groups')}">
           <span class="glyphicon glyphicon-eye-close"></span>
-          Show my groups (<tal:ts i18n:name="count">${len(my_groups)}</tal:ts>)
+          <tal:ts i18n:translate="">Show my groups</tal:ts> (${len(my_groups)})
       </a>
       <a class="btn btn-default"
          tal:condition="not show_all"
-         href="${request.resource_path(context, 'vote_groups', query = {'show_all': '1'})}"
-         i18n:translate="">
+         href="${request.resource_path(context, 'vote_groups', query = {'show_all': '1'})}">
           <span class="glyphicon glyphicon-eye-open"></span>
-          Show all groups (<tal:ts i18n:name="count">${len(vote_groups)}</tal:ts>)
+          <tal:ts i18n:translate="">Show all groups</tal:ts> (${len(vote_groups)})
       </a>
     </tal:delegation_controls>
   </div>
