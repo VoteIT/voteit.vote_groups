@@ -15,19 +15,19 @@
        tal:condition="request.is_moderator"
        href="${request.resource_url(context, 'add_vote_group')}">
         <span class="glyphicon glyphicon-plus"></span>
-        <tal:ts i18:translate="">New vote group</tal:ts>
+        <tal:ts i18n:translate="">New vote group</tal:ts>
     </a>
     <a class="btn btn-default"
        tal:condition="request.is_moderator"
        href="javascript:window.print()">
         <span class="glyphicon glyphicon-print"></span>
-        <tal:ts i18:translate="">Print</tal:ts>
+        <tal:ts i18n:translate="">Print</tal:ts>
     </a>
     <a class="btn btn-default"
        tal:condition="has_qr and request.is_moderator"
        href="${request.resource_url(context, '_qr_voter_groups')}">
         <span class="glyphicon glyphicon-qrcode"></span>
-        <tal:ts i18:translate="">Apply vote rights</tal:ts>
+        <tal:ts i18n:translate="">Apply vote rights</tal:ts>
     </a>
 
     <tal:delegation_controls condition="not request.is_moderator and len(vote_groups) > len(my_groups)">

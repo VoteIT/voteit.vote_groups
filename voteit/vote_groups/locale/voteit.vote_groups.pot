@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
-"POT-Creation-Date: 2018-02-22 15:15+0100\n"
+"POT-Creation-Date: 2018-02-22 15:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,7 +21,7 @@ msgid "Primary"
 msgstr ""
 
 #: ./voteit/vote_groups/schemas.py:17
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:96
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:91
 msgid "Stand-in"
 msgstr ""
 
@@ -157,59 +157,59 @@ msgstr ""
 msgid "meeting_vote_groups_header"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:17
-msgid "<dynamic element> New vote group"
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:18
+msgid "New vote group"
 msgstr ""
 
 #: ./voteit/vote_groups/templates/meeting_vote_groups.pt:24
-msgid "<dynamic element> Print"
+msgid "Print"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:31
-msgid "<dynamic element> Apply vote rights"
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:30
+msgid "Apply vote rights"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:40
-msgid "<dynamic element> Show my groups (${count})"
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:38
+msgid "Show my groups"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:47
-msgid "<dynamic element> Show all groups (${count})"
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:44
+msgid "Show all groups"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:70
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:65
 msgid "Edit"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:75
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:70
 msgid "Change roles"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:81
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:76
 msgid "Save roles"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:86
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:81
 msgid "Delete"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:94
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:89
 msgid "Member"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:95
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:90
 msgid "Role"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:118
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:113
 msgid "Choose stand-in"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:121
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:116
 msgid "No stand-ins available"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:125
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:120
 msgid "Release stand-in"
 msgstr ""
 
