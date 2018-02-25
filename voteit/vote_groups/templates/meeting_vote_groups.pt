@@ -6,9 +6,15 @@
       i18n:domain="voteit.vote_groups">
 <body>
   <div metal:fill-slot="main-content">
-  <h2 i18n:translate="meeting_vote_groups_header">
-      Vote groups
-  </h2>
+  <h2 i18n:translate="">Vote groups</h2>
+
+  <p tal:condition="ongoing_polls">
+      <span class="glyphicon glyphicon-info-sign"></span>
+      <tal:ts i18n:translate="ongoing_polls_notice">
+          There are ongoing polls so groups can't be changed right now.
+          You may reload the page when the polls have closed.
+      </tal:ts>
+  </p>
 
   <div class="btn-group hidden-print" role="group">
     <a class="btn btn-default"
@@ -45,13 +51,15 @@
       </a>
     </tal:delegation_controls>
   </div>
+
   <br/><br/>
-  <div class="list-group" tal:define="groups (request.is_moderator or show_all) and vote_groups.sorted() or my_groups">
+
+  <div class="list-group"
+       tal:define="groups (request.is_moderator or show_all) and vote_groups.sorted() or my_groups">
+    <div class="list-group-item" tal:repeat="vote_group groups">
     <form method="post"
           action="${request.resource_path(context, '__vote_group_save_roles__', query = {'vote_group': vote_group.name})}"
-          class="list-group-item"
-          data-roles-container
-          tal:repeat="vote_group groups">
+          data-roles-container>
       <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group)">
 
       <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
@@ -60,12 +68,12 @@
 
       <div class="btn-group hidden-print" role="group"
           tal:condition="request.is_moderator">
-          <a class="btn btn-default"
+          <a class="btn btn-default ${ongoing_polls and 'disabled' or None}"
              href="${request.resource_url(context, 'edit_vote_group', query = {'vote_group': vote_group.name})}"
              i18n:translate="">
               Edit
           </a>
-          <button class="btn btn-default"
+          <button class="btn btn-default ${ongoing_polls and 'disabled' or None}"
              data-edit-roles
              i18n:translate="">
               Change roles
@@ -76,7 +84,7 @@
              i18n:translate="">
               Save roles
           </button>
-          <a class="btn btn-default"
+          <a class="btn btn-default ${ongoing_polls and 'disabled' or None}"
              href="${request.resource_url(context, 'delete_vote_group', query = {'vote_group': vote_group.name})}"
              i18n:translate="">
               Delete
@@ -106,16 +114,16 @@
               <tal:if condition="role == 'primary'">
               <a tal:condition="userid in vote_group.assignments"
                  tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
-              <tal:actions tal:condition="request.is_moderator or request.authenticated_userid == userid">
+              <tal:actions tal:condition="not ongoing_polls and (request.is_moderator or request.authenticated_userid == userid)">
                 <a tal:condition="userid not in vote_group.assignments and has_standins"
-                   class="btn btn-default pull-right"
+                   class="btn btn-default btn-sm pull-right"
                    href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}"
                    i18n:translate="">Choose stand-in</a>
                 <a tal:condition="userid not in vote_group.assignments and not has_standins"
-                   class="btn btn-default disabled pull-right"
+                   class="btn btn-default btn-sm disabled pull-right"
                    href="#" i18n:translate="">No stand-ins available</a>
                 <a tal:condition="userid in vote_group.assignments"
-                   class="btn btn-default pull-right"
+                   class="btn btn-default btn-sm pull-right"
                    href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}"
                    i18n:translate="">Release stand-in</a>
               </tal:actions>
@@ -126,7 +134,8 @@
       </table>
 
     </tal:group>
-    </form><!-- list-group-item -->
+    </form>
+    </div><!-- list-group-item -->
   </div>
   </div>
 </body>

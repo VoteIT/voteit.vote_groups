@@ -10,6 +10,7 @@ from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPFound
 from pyramid.traversal import resource_path
 from pyramid.view import view_config
+from repoze.catalog.query import Eq
 
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
@@ -32,16 +33,19 @@ from voteit.vote_groups.schemas import AssignVoteSchema
 from voteit.vote_groups.schemas import ROLE_CHOICES
 
 
-def _check_ongoing_poll(view):
-    """ Check if a poll is ongoing, return number of ongoing polls """
-    meeting_path = resource_path(view.request.meeting)
-    ongoing = view.catalog_search(type_name='Poll',
-                                  path=meeting_path,
-                                  workflow_state='ongoing')
-    if ongoing:
+_poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
+_polls_ongoing_msg = _("Note! Polls ongoing within meeting!")
+
+def _count_ongoing_poll(request):
+    query = _poll_query & Eq('path', resource_path(request.meeting))
+    return request.root.catalog.query(query)[0].total
+
+
+def _block_during_ongoing_poll(request):
+    if _count_ongoing_poll(request):
         raise HTTPForbidden(_("access_during_ongoing_not_allowed",
-                            default="During ongoing polls, this action isn't allowed. "
-                            "Try again when polls have closed."))
+                              default="During ongoing polls, this action isn't allowed. "
+                                      "Try again when polls have closed."))
 
 
 class VoteGroupsView(BaseView, VoteGroupEditMixin):
@@ -56,6 +60,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
             'role_choices': ROLE_CHOICES,
             'has_qr': IPresenceQR is not None,
             'show_all': show_all,
+            'ongoing_polls': bool(_count_ongoing_poll(self.request)),
         }
         return response
 
@@ -63,7 +68,6 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     def add_vote_group(self):
         """ Add a new delegation and redirect to edit view.
         """
-        _check_ongoing_poll(self)
         name = self.vote_groups.new()
         url = self.request.resource_url(self.context, 'edit_vote_group', query={'vote_group': name})
         return HTTPFound(location=url)
@@ -72,18 +76,14 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     def release_standin(self):
         """ Release stand-in
         """
-        _check_ongoing_poll(self)
-
+        _block_during_ongoing_poll(self.request)
         group_name = self.request.GET.get('vote_group')
         group = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)[group_name]
         primary = self.request.GET.get('primary')
-
         if not self.request.is_moderator and \
            self.request.authenticated_userid != primary:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
-
         del group.assignments[primary]
-
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
@@ -93,36 +93,31 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         permission=security.MODERATE_MEETING,
         renderer='json')
     def save_roles(self):
-        _check_ongoing_poll(self)
+        _block_during_ongoing_poll(self.request)
         # TODO Load Schema(?), validate and save.
         group = self.group
         message = None
         valid_roles = [r[0] for r in ROLE_CHOICES]
-
         changed = set()
         for uid, role in self.request.POST.items():
             if uid in group and group[uid] != role:
                 changed.add(uid)
-
         change_disallowed = set(group.assignments.keys()).union(group.assignments.values())
         change_intersect = changed.intersection(change_disallowed)
         if change_intersect:
             message = _('Can not change role for user(s) ${users} with assigned voter rights.',
                         mapping={'users': ', '.join(change_intersect)})
-
         other_primaries = self.vote_groups.get_primaries(exclude_group=group)
         changed_to_primary = filter(lambda uid: self.request.POST[uid] == 'primary', changed)
         primary_intersect = other_primaries.intersection(changed_to_primary)
         if primary_intersect:
             message = _('User(s) ${users} are already primary in another group.',
                         mapping={'users': ', '.join(primary_intersect)})
-
         if message:
             return {
                 'status': 'failed',
                 'error_message': self.request.localizer.translate(message),
             }
-
         for uid in changed:
             if role in valid_roles:
                 group[uid] = self.request.POST[uid]
@@ -141,7 +136,9 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(EditVoteGroupForm, self).__init__(context, request)
-        _check_ongoing_poll(self)
+        #OK to allow edit during polls since this view is only allowed for moderators
+        if _count_ongoing_poll(self.request):
+            self.flash_messages.add(_polls_ongoing_msg, type='danger')
 
     def appstruct(self):
         return self.group.appstruct()
@@ -172,8 +169,7 @@ class DeleteVoteGroupForm(DefaultDeleteForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(DeleteVoteGroupForm, self).__init__(context, request)
-        _check_ongoing_poll(self)
-
+        _block_during_ongoing_poll(self.request)
         if not request.is_moderator:
             raise HTTPForbidden(_("You do not have authorization to delete groups."))
 
@@ -227,7 +223,7 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
-        _check_ongoing_poll(self)
+        _block_during_ongoing_poll(self.request)
         if not request.is_moderator and \
            request.authenticated_userid not in self.group.assignments.values() and \
            request.authenticated_userid not in self.group.primaries:
@@ -257,11 +253,9 @@ class ApplyQRPermissionsForm(BaseForm):
         if IPresenceQR is None:
             self.flash_messages.add(_("voteit.qr not installed"), type='danger')
             raise HTTPFound(location=self.request.resource_url(self.context))
-        try:
-            _check_ongoing_poll(self)
-        except HTTPForbidden:
+        if _count_ongoing_poll(self.request):
             #OK for admins to override here
-            self.flash_messages.add(_("Note! Polls ongoing within meeting!"), type='danger')
+            self.flash_messages.add(_polls_ongoing_msg, type='danger')
         return super(ApplyQRPermissionsForm, self).__call__()
 
     def update_electoral_register(self):
@@ -300,15 +294,30 @@ class ApplyQRPermissionsForm(BaseForm):
         return HTTPFound(location=self.request.resource_url(self.context))
 
 
-def vote_groups_active(context, request, va):
+def vote_groups_active(context, request, *args, **kw):
     vote_groups = request.registry.queryAdapter(request.meeting, IVoteGroups)
     if vote_groups:
         return bool(len(vote_groups))
     return False
 
 
+def vote_groups_link(context, request, va, **kw):
+    if vote_groups_active(context, request):
+        title = request.localizer.translate(va.title)
+        url = request.resource_url(request.meeting, 'vote_groups')
+        return """
+        <li><a href="%s">%s</a></li>
+        """ % (url, title)
+
+
 def includeme(config):
     config.scan(__name__)
+    config.add_view_action(
+        vote_groups_link,
+        'nav_meeting', 'vote_groups',
+        title = _("Groups"),
+        permission=_(security.VIEW),
+    )
     config.add_view_action(
         control_panel_category,
         'control_panel', 'vote_groups',
