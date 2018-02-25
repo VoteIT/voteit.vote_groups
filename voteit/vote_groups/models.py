@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from UserDict import IterableUserDict
+from copy import deepcopy
 from persistent import Persistent
 from uuid import uuid4
 
@@ -89,6 +90,17 @@ class VoteGroups(IterableUserDict):
                 if user.email in group.potential_members:
                     group.potential_members.remove(user.email)
                     group[user.userid] = 'observer'
+
+    def copy_from_meeting(self, meeting):
+        """ Transfer all groups from another meeting, if they don't already exist.
+        """
+        new_vote_groups = IVoteGroups(meeting)
+        counter = 0
+        for (name, vote_group) in new_vote_groups.items():
+            if name not in self:
+                self[name] = deepcopy(vote_group)
+                counter += 1
+        return counter
 
 
 @implementer(IVoteGroup)

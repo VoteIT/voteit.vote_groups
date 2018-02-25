@@ -294,6 +294,31 @@ class ApplyQRPermissionsForm(BaseForm):
         return HTTPFound(location=self.request.resource_url(self.context))
 
 
+
+@view_config(name="_copy_vote_groups",
+             context=IMeeting,
+             permission=security.MODERATE_MEETING,
+             renderer="arche:templates/form.pt")
+class CopyFromOtherMeetingForm(BaseForm):
+    """ Copy groups from another meeting """
+    type_name = 'VoteGroup'
+    schema_name = 'copy'
+    title = _("Copy groups from another meeting?")
+
+    def save_success(self, appstruct):
+        meeting_name = appstruct['meeting_name']
+        from_meeting = self.request.root[meeting_name]
+        groups = IVoteGroups(self.context)
+        copied_count = groups.copy_from_meeting(from_meeting)
+        if copied_count:
+            msg = _("Copied ${count} groups", mapping = {'count': copied_count})
+            self.flash_messages.add(msg, type='success')
+        else:
+            msg = _("No groups to copy.")
+            self.flash_messages.add(msg, type='warning')
+        return HTTPFound(location=self.request.resource_url(self.context))
+
+
 def vote_groups_active(context, request, *args, **kw):
     vote_groups = request.registry.queryAdapter(request.meeting, IVoteGroups)
     if vote_groups:
@@ -332,6 +357,12 @@ def includeme(config):
         'control_panel_vote_groups', 'vote_groups',
         title=_("Manage vote groups"),
         view_name='vote_groups',
+    )
+    config.add_view_action(
+        control_panel_link,
+        'control_panel_vote_groups', 'copy_vote_groups',
+        title=_("Copy vote groups"),
+        view_name='_copy_vote_groups',
     )
     if IPresenceQR is not None:
         config.add_view_action(

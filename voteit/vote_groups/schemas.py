@@ -6,6 +6,7 @@ import deform
 from arche.schemas import userid_hinder_widget
 from arche.validators import existing_userids
 from voteit.core.schemas.common import strip_and_lowercase
+from voteit.core.schemas.meeting import deferred_copy_from_meeting_widget
 from voteit.core.validators import multiple_email_validator
 
 from voteit.vote_groups import _
@@ -90,7 +91,18 @@ class ApplyQRPresentVotersSchema(colander.Schema):
     )
 
 
+class CopyFromOtherMeetingSchema(colander.Schema):
+    meeting_name = colander.SchemaNode(
+        colander.String(),
+        title=_("Copy groups from another meeting"),
+        description=_("copy_groups_description",
+                      default="You can only pick meeting where you've been a moderator. "
+                              "If a group exist here already it will be skipped"),
+        widget=deferred_copy_from_meeting_widget,
+    )
+
 
 def includeme(config):
     config.add_schema('VoteGroup', EditVoteGroupSchema, 'edit')
     config.add_schema('VoteGroup', ApplyQRPresentVotersSchema, 'apply_qr_present')
+    config.add_schema('VoteGroup', CopyFromOtherMeetingSchema, 'copy')
