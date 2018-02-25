@@ -99,16 +99,16 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         message = None
         valid_roles = [r[0] for r in ROLE_CHOICES]
         changed = set()
-        for uid, role in self.request.POST.items():
-            if uid in group and group[uid] != role:
-                changed.add(uid)
+        for userid, role in self.request.POST.items():
+            if userid in group and group[userid] != role:
+                changed.add(userid)
         change_disallowed = set(group.assignments.keys()).union(group.assignments.values())
         change_intersect = changed.intersection(change_disallowed)
         if change_intersect:
             message = _('Can not change role for user(s) ${users} with assigned voter rights.',
                         mapping={'users': ', '.join(change_intersect)})
         other_primaries = self.vote_groups.get_primaries(exclude_group=group)
-        changed_to_primary = filter(lambda uid: self.request.POST[uid] == 'primary', changed)
+        changed_to_primary = filter(lambda userid: self.request.POST[userid] == 'primary', changed)
         primary_intersect = other_primaries.intersection(changed_to_primary)
         if primary_intersect:
             message = _('User(s) ${users} are already primary in another group.',
@@ -118,9 +118,9 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
                 'status': 'failed',
                 'error_message': self.request.localizer.translate(message),
             }
-        for uid in changed:
+        for userid in changed:
             if role in valid_roles:
-                group[uid] = self.request.POST[uid]
+                group[userid] = self.request.POST[userid]
         return {'status': 'success', 'changed_roles': len(changed)}
 
 

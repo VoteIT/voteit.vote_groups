@@ -128,7 +128,7 @@ class VoteGroup(Persistent, IterableUserDict):
     def get_voters(self):
         return set(
             list(self.assignments.values()) +
-            filter(lambda uid: uid not in self.assignments, self.primaries)
+            filter(lambda userid: userid not in self.assignments, self.primaries)
         )
 
     def get_primary_for(self, userid):
