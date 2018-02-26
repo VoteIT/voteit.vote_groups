@@ -38,14 +38,13 @@ class VoteGroupValidator(VoteGroupEditMixin):
 
 
 @colander.deferred
-class UniqueVGTitleValidator(object):
+class UniqueVGTitleValidator(VoteGroupEditMixin):
 
     def __init__(self, node, kw):
         self.request = kw['request']
-        self.groups = IVoteGroups(self.request.meeting)
 
     def __call__(self, node, value):
-        lowercased_existing = [x.title.lower() for x in self.groups.values()]
+        lowercased_existing = [x.title.lower() for x in self.groups.values() if x != self.group]
         if value.lower() in lowercased_existing:
             raise colander.Invalid(node, _("Already exists"))
 
