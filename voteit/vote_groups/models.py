@@ -9,6 +9,7 @@ from uuid import uuid4
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
 from arche.interfaces import IEmailValidatedEvent
+from arche.interfaces import IUser
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
 from repoze.catalog.query import Any, Eq
@@ -84,6 +85,7 @@ class VoteGroups(IterableUserDict):
         return True
 
     def email_validated(self, user):
+        assert IUser.providedBy(user)
         if user.email:
             for group in self.values():
                 if user.email in group.potential_members:
@@ -188,7 +190,7 @@ def user_validated_email_subscriber(event):
     docids = request.root.catalog.query(query)[1]
     for meeting in request.resolve_docids(docids, perm=None):
         vote_groups = IVoteGroups(meeting, None)
-        vote_groups.email_validated(user.email)
+        vote_groups.email_validated(user)
 
 
 def includeme(config):

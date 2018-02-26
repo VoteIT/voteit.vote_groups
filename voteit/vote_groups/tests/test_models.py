@@ -1,14 +1,13 @@
 from unittest import TestCase
 
 from pyramid import testing
+from pyramid.request import apply_request_extensions
+from voteit.core.testing_helpers import bootstrap_and_fixture
 from zope.interface.verify import verifyClass
 from zope.interface.verify import verifyObject
 
 from voteit.vote_groups.interfaces import IVoteGroup
 from voteit.vote_groups.interfaces import IVoteGroups
-
-from voteit.vote_groups.models import VoteGroups
-from voteit.vote_groups.models import VoteGroup
 
 
 class VoteGroupsTests(TestCase):
@@ -21,6 +20,7 @@ class VoteGroupsTests(TestCase):
 
     @property
     def _cut(self):
+        from voteit.vote_groups.models import VoteGroups
         return VoteGroups
 
     def _mk_one(self):
@@ -90,10 +90,10 @@ class VoteGroupTests(TestCase):
 
     @property
     def _cut(self):
+        from voteit.vote_groups.models import VoteGroup
         return VoteGroup
 
     def _mk_one(self):
-        # type: () -> VoteGroup
         from voteit.core.models.meeting import Meeting
         from voteit.vote_groups.models import VoteGroups
         groups = VoteGroups(Meeting())
@@ -122,3 +122,39 @@ class VoteGroupTests(TestCase):
         self.assertEqual(group.get_voters(), {'one'})
         self.assertEqual(group.get_primary_for('one'), 'two')
         self.assertIs(group.get_primary_for('two'), None)
+
+
+class UserValidatedEmailIntegrationTests(TestCase):
+
+    def setUp(self):
+        self.config = testing.setUp()
+
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def test_email_validated_subscriber(self):
+        from arche.events import EmailValidatedEvent
+        from arche.resources import User
+        from voteit.core.models.meeting import Meeting
+        from voteit.vote_groups.models import VoteGroups
+        self.config.include('arche.testing')
+        self.config.include('voteit.core.testing_helpers.register_catalog')
+        root = bootstrap_and_fixture(self.config)
+        request = testing.DummyRequest()
+        apply_request_extensions(request)
+        request.root = root
+        self.config.begin(request)
+        root['m'] = m = Meeting()
+        root['users']['jane'] = user = User(email='hello@world.org', email_validated=True)
+        groups = VoteGroups(m)
+        name = groups.new()
+        group = groups[name]
+        group.potential_members.add('hello@world.org')
+        self.config.include('voteit.vote_groups.models')
+        event = EmailValidatedEvent(user)
+        self.config.registry.notify(event)
+        # Should have been picked up
+        self.assertNotIn('hello@world.org', group.potential_members)
+        # And added
+        self.assertIn('jane', group)
