@@ -22,7 +22,6 @@ from voteit.vote_groups.interfaces import IVoteGroup
 from voteit.vote_groups.interfaces import IVoteGroups
 
 
-#FIXME: Use IterableUserDict from standardlib + import IDict for ifaces
 @implementer(IVoteGroups)
 @adapter(IMeeting)
 class VoteGroups(IterableUserDict):
