@@ -10,6 +10,7 @@ from voteit.core.schemas.meeting import deferred_copy_from_meeting_widget
 from voteit.core.validators import multiple_email_validator
 
 from voteit.vote_groups import _
+from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 
@@ -36,10 +37,24 @@ class VoteGroupValidator(VoteGroupEditMixin):
             raise exc
 
 
+@colander.deferred
+class UniqueVGTitleValidator(object):
+
+    def __init__(self, node, kw):
+        self.request = kw['request']
+        self.groups = IVoteGroups(self.request.meeting)
+
+    def __call__(self, node, value):
+        lowercased_existing = [x.title.lower() for x in self.groups.values()]
+        if value.lower() in lowercased_existing:
+            raise colander.Invalid(node, _("Already exists"))
+
+
 class EditVoteGroupSchema(colander.Schema):
     title = colander.SchemaNode(
         colander.String(),
         title=_("Title"),
+        validator = UniqueVGTitleValidator,
     )
     description = colander.SchemaNode(
         colander.String(),
