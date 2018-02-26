@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
 "POT-Creation-Date: 2018-02-25 14:22+0100\n"
-"PO-Revision-Date: 2018-02-25 14:23+0100\n"
+"PO-Revision-Date: 2018-02-26 15:55+0100\n"
 "Last-Translator: Weblate Admin <admin@example.com>\n"
 "Language-Team: Swedish <http://example.com/projects/voteit/voteit-"
 "vote_groups/sv/>\n"
@@ -62,7 +62,7 @@ msgstr "E-post till potentiella gruppmedlemmar"
 
 #: voteit/vote_groups/schemas.py:64
 msgid "Add one per row"
-msgstr "Lätt till en per rad"
+msgstr "Lägg till en per rad"
 
 #: voteit/vote_groups/schemas.py:88
 msgid "Update electoral register too?"
