@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
-"POT-Creation-Date: 2018-02-25 14:22+0100\n"
+"POT-Creation-Date: 2018-02-26 16:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,67 +16,71 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Lingua 4.13\n"
 
-#: ./voteit/vote_groups/schemas.py:17
+#: ./voteit/vote_groups/schemas.py:18
 msgid "Primary"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:18
+#: ./voteit/vote_groups/schemas.py:19
 #: ./voteit/vote_groups/templates/meeting_vote_groups.pt:99
 msgid "Stand-in"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:19
+#: ./voteit/vote_groups/schemas.py:20
 msgid "Observer"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:34
+#: ./voteit/vote_groups/schemas.py:35
 #, python-format
 msgid "Cannot remove user(s) ${users} with transferred voter permission."
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:42
-msgid "Title"
-msgstr ""
-
-#: ./voteit/vote_groups/schemas.py:46
-msgid "Description"
-msgstr ""
-
-#: ./voteit/vote_groups/schemas.py:54
-msgid "Username"
-msgstr ""
-
-#: ./voteit/vote_groups/schemas.py:55
-msgid "User"
+#: ./voteit/vote_groups/schemas.py:50
+msgid "Already exists"
 msgstr ""
 
 #: ./voteit/vote_groups/schemas.py:56
+msgid "Title"
+msgstr ""
+
+#: ./voteit/vote_groups/schemas.py:61
+msgid "Description"
+msgstr ""
+
+#: ./voteit/vote_groups/schemas.py:69
+msgid "Username"
+msgstr ""
+
+#: ./voteit/vote_groups/schemas.py:70
+msgid "User"
+msgstr ""
+
+#: ./voteit/vote_groups/schemas.py:71
 msgid "Start typing a userid"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:63
+#: ./voteit/vote_groups/schemas.py:78
 msgid "Emails of potential members"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:64
+#: ./voteit/vote_groups/schemas.py:79
 msgid "Add one per row"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:88
+#: ./voteit/vote_groups/schemas.py:103
 msgid "Update electoral register too?"
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:89
+#: ./voteit/vote_groups/schemas.py:104
 msgid "Will only update if a new one is needed."
 msgstr ""
 
-#: ./voteit/vote_groups/schemas.py:97
+#: ./voteit/vote_groups/schemas.py:112
 msgid "Copy groups from another meeting"
 msgstr ""
 
 #. Default: You can only pick meeting where you've been a moderator. If a group
 #. exist here already it will be skipped
-#: ./voteit/vote_groups/schemas.py:98
+#: ./voteit/vote_groups/schemas.py:113
 msgid "copy_groups_description"
 msgstr ""
 
