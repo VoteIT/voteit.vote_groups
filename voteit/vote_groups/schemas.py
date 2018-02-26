@@ -23,6 +23,7 @@ ROLE_CHOICES = (
 
 @colander.deferred
 class VoteGroupValidator(VoteGroupEditMixin):
+
     def __init__(self, node, kw):
         self.request = kw['request']
 
@@ -44,7 +45,7 @@ class UniqueVGTitleValidator(VoteGroupEditMixin):
         self.request = kw['request']
 
     def __call__(self, node, value):
-        lowercased_existing = [x.title.lower() for x in self.groups.values() if x != self.group]
+        lowercased_existing = [x.title.lower() for x in self.vote_groups.values() if x != self.group]
         if value.lower() in lowercased_existing:
             raise colander.Invalid(node, _("Already exists"))
 
