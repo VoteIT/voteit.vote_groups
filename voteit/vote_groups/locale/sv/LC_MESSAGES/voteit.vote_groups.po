@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
-"POT-Creation-Date: 2018-02-26 16:12+0100\n"
-"PO-Revision-Date: 2018-02-26 16:12+0100\n"
+"POT-Creation-Date: 2018-02-27 12:03+0100\n"
+"PO-Revision-Date: 2018-02-27 12:03+0100\n"
 "Last-Translator: Weblate Admin <admin@example.com>\n"
 "Language-Team: Swedish <http://example.com/projects/voteit/voteit-"
 "vote_groups/sv/>\n"
@@ -23,7 +23,7 @@ msgid "Primary"
 msgstr "Ordinarie"
 
 #: voteit/vote_groups/schemas.py:19
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:99
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:112
 msgid "Stand-in"
 msgstr "Ersättare"
 
@@ -31,7 +31,7 @@ msgstr "Ersättare"
 msgid "Observer"
 msgstr "Observatör"
 
-#: voteit/vote_groups/schemas.py:35
+#: voteit/vote_groups/schemas.py:36
 #, python-format
 msgid "Cannot remove user(s) ${users} with transferred voter permission."
 msgstr "Kan inte ta bort användare ${users} med överförd rösträtt."
@@ -238,39 +238,47 @@ msgstr "Visa mina grupper"
 msgid "Show all groups"
 msgstr "Visa alla grupper"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:73
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:71
+msgid "Potential voters: ${count}"
+msgstr "Potentiella röstande: ${count}"
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:76
+msgid "Unregistered members: ${count}"
+msgstr "Oregistrerade medlemmar: ${count}"
+
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:86
 msgid "Edit"
 msgstr "Redigera"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:78
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:91
 msgid "Change roles"
 msgstr "Ändra roller"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:84
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:97
 msgid "Save roles"
 msgstr "Spara roller"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:89
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:102
 msgid "Delete"
 msgstr "Radera"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:97
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:110
 msgid "Member"
 msgstr "Medlem"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:98
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:111
 msgid "Role"
 msgstr "Roll"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:121
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:134
 msgid "Choose stand-in"
 msgstr "Välj ersättare"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:124
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:137
 msgid "No stand-ins available"
 msgstr "Inga ersättare tillgängliga"
 
-#: voteit/vote_groups/templates/meeting_vote_groups.pt:128
+#: voteit/vote_groups/templates/meeting_vote_groups.pt:141
 msgid "Release stand-in"
 msgstr "Återför"
 

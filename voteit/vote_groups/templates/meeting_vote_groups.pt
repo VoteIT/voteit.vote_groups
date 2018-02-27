@@ -66,6 +66,19 @@
 
       <p tal:condition="vote_group.description" tal:content="vote_group.description"></p>
 
+      <div class="row">
+          <div class="col-xs-6">
+              <tal:ts i18n:translate="">
+                  Potential voters: <b i18n:name="count">${len(tuple(vote_group.primaries))}</b>
+              </tal:ts>
+          </div>
+          <div class="col-xs-6">
+            <tal:ts i18n:translate="">
+                Unregistered members: <b i18n:name="count">${len(vote_group.potential_members)}</b>
+            </tal:ts>
+          </div>
+      </div>
+
       <div class="btn-group hidden-print" role="group"
           tal:condition="request.is_moderator">
           <a class="btn btn-default ${ongoing_polls and 'disabled' or None}"
@@ -132,6 +145,7 @@
           </tr>
         </tbody>
       </table>
+
 
     </tal:group>
     </form>
