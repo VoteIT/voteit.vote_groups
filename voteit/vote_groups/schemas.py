@@ -10,7 +10,6 @@ from voteit.core.schemas.meeting import deferred_copy_from_meeting_widget
 from voteit.core.validators import multiple_email_validator
 
 from voteit.vote_groups import _
-from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 
@@ -93,6 +92,7 @@ def deferred_choices_widget(node, kw):
 class AssignVoteSchema(colander.Schema):
     standin = colander.SchemaNode(
         colander.String(),
+        title=_("Stand-in"),
         widget=deferred_choices_widget,
     )
 
