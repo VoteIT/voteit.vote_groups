@@ -5,11 +5,13 @@ import colander
 import deform
 from arche.schemas import userid_hinder_widget
 from arche.validators import existing_userids
+from pyramid.httpexceptions import HTTPNotFound
 from voteit.core.schemas.common import strip_and_lowercase
 from voteit.core.schemas.meeting import deferred_copy_from_meeting_widget
 from voteit.core.validators import multiple_email_validator
 
 from voteit.vote_groups import _
+from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 
@@ -84,7 +86,17 @@ class EditVoteGroupSchema(colander.Schema):
 
 @colander.deferred
 def deferred_choices_widget(node, kw):
-    choices = kw.get('choices')
+    request = kw['request']
+    groups = IVoteGroups(request.meeting)
+    group_name = request.GET.get('vote_group', None)
+    try:
+        group = groups[group_name]
+    except KeyError:
+        raise HTTPNotFound("No such group")
+    choices = [('', _("- Select -"))]
+    for standin in groups.get_free_standins(group):
+        title = request.creators_info([standin], portrait=False, at=False, no_tag=True)
+        choices.append((standin, title))
     return deform.widget.SelectWidget(values=choices)
 
 
@@ -118,5 +130,6 @@ class CopyFromOtherMeetingSchema(colander.Schema):
 
 def includeme(config):
     config.add_schema('VoteGroup', EditVoteGroupSchema, 'edit')
+    config.add_schema('VoteGroup', AssignVoteSchema, 'assign')
     config.add_schema('VoteGroup', ApplyQRPresentVotersSchema, 'apply_qr_present')
     config.add_schema('VoteGroup', CopyFromOtherMeetingSchema, 'copy')

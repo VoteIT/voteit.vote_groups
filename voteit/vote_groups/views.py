@@ -194,6 +194,7 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
     """ Assign vote to stand-in.
     """
     type_name = 'VoteGroup'
+    schema_name = 'assign'
 
     @property
     def title(self):
@@ -211,23 +212,24 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
     def current_standin(self):
         if self.for_user in self.group.assignments:
             return self.group.assignments[self.for_user]
+        return ''
 
-    def get_schema(self):
-        choices = []
-        for standin in self.vote_groups.get_free_standins(self.group):
-            choices.append((standin, standin))
-        return AssignVoteSchema().bind(choices=choices)
-
-    def appstruct(self):
-        return dict(standins=self.group.standins)
+    @reify
+    def allowed(self):
+        userid = self.request.authenticated_userid
+        return self.request.is_moderator or (userid and userid == self.for_user) and \
+               userid not in self.group.assignments.values() and\
+               userid not in self.group.primaries
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
         _block_during_ongoing_poll(self.request)
-        if not request.is_moderator and \
-           request.authenticated_userid not in self.group.assignments.values() and \
-           request.authenticated_userid not in self.group.primaries:
+        if not self.allowed:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
+
+    def appstruct(self):
+        #Not used since you only assign new
+        {}
 
     def save_success(self, appstruct):
         self.group.assignments[self.for_user] = appstruct['standin']
