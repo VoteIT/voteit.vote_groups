@@ -40,7 +40,6 @@ class IVoteGroup(IDict):
     potential_members = Attribute("Persistent set of email addresses.")
     primaries = Attribute("Primary representatives")
     standins = Attribute("Standins, iterator")
-    observers = Attribute("Observers, iterator")
 
     def __init__(name, title="", description=""):
         """ Constructor, normally not passed any values within this app. """

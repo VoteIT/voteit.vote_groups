@@ -16,7 +16,6 @@ from voteit.vote_groups.mixins import VoteGroupEditMixin
 ROLE_CHOICES = (
     ('primary', _('Primary')),
     ('standin', _('Stand-in')),
-    ('observer', _('Observer')),
 )
 
 

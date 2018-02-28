@@ -90,7 +90,7 @@ class VoteGroups(IterableUserDict):
             for group in self.values():
                 if user.email in group.potential_members:
                     group.potential_members.remove(user.email)
-                    group[user.userid] = 'observer'
+                    group[user.userid] = 'standin'
 
     def copy_from_meeting(self, meeting):
         """ Transfer all groups from another meeting, if they don't already exist.
@@ -134,10 +134,6 @@ class VoteGroup(Persistent, IterableUserDict):
     def standins(self):
         return self.get_roles('standin')
 
-    @property
-    def observers(self):
-        return self.get_roles('observer')
-
     def get_voters(self):
         return set(
             list(self.assignments.values()) +
@@ -174,7 +170,7 @@ class VoteGroup(Persistent, IterableUserDict):
         for userid in previous.difference(incoming):
             del self[userid]
         for userid in incoming.difference(previous):
-            self[userid] = 'observer'
+            self[userid] = 'standin'
         if set(self.potential_members) != potential_members:
             self.potential_members.clear()
             self.potential_members.update(potential_members)

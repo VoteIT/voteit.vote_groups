@@ -30,7 +30,7 @@ class VoteGroupsTests(TestCase):
         group = groups[name]
         group['one'] = 'standin'
         group['two'] = 'primary'
-        group['three'] = 'observer'
+        group['three'] = 'standin'
         group.assignments['two'] = 'one'
         name = groups.new()
         group = groups[name]
@@ -101,7 +101,7 @@ class VoteGroupTests(TestCase):
         group = groups[name]
         group['one'] = 'standin'
         group['two'] = 'primary'
-        group['three'] = 'observer'
+        group['three'] = 'standin'
         return group
 
     def test_verify_class(self):
