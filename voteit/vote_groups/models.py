@@ -100,6 +100,8 @@ class VoteGroups(IterableUserDict):
         for (name, vote_group) in new_vote_groups.items():
             if name not in self:
                 self[name] = deepcopy(vote_group)
+                #Clear all asignments
+                self[name].assignments.clear()
                 counter += 1
         return counter
 
