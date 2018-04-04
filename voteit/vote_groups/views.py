@@ -29,7 +29,6 @@ from voteit.vote_groups import _
 from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
-from voteit.vote_groups.schemas import AssignVoteSchema
 from voteit.vote_groups.schemas import ROLE_CHOICES
 
 
@@ -319,6 +318,56 @@ class CopyFromOtherMeetingForm(BaseForm):
             msg = _("No groups to copy.")
             self.flash_messages.add(msg, type='warning')
         return HTTPFound(location=self.request.resource_url(self.context))
+
+
+@view_config(name = "add_group_tickets",
+             context = IMeeting,
+             renderer = "arche:templates/form.pt",
+             permission = security.ADD_INVITE_TICKET)
+class AddGroupTicketsForm(BaseForm):
+    schema_name = 'add_group_tickets'
+    type_name = 'VoteGroup'
+
+    title = _("Invite participants from groups")
+
+    @property
+    def buttons(self):
+        return (self.button_add, self.button_cancel)
+
+    def add_success(self, appstruct):
+        groups = appstruct['groups']
+        vote_groups = IVoteGroups(self.context)
+        emails = vote_groups.get_emails(group_names=groups)
+        roles = appstruct['roles']
+        added = 0
+        rejected = 0
+        for email in emails:
+            result = self.context.add_invite_ticket(email, roles, sent_by = self.request.authenticated_userid)
+            if result:
+                added += 1
+            else:
+                rejected += 1
+        if not rejected:
+            msg = _('added_tickets_text', default = "Successfully added ${added} invites",
+                    mapping={'added': added})
+        elif not added:
+            msg = _('no_tickets_added',
+                    default = "No tickets added - all you specified probably exist already. "
+                    "(Proccessed ${rejected})",
+                    mapping = {'rejected': rejected})
+            self.flash_messages.add(msg, type = 'warning', auto_destruct = False)
+            url = self.request.resource_url(self.context, 'add_group_tickets')
+            return HTTPFound(location = url)
+        else:
+            msg = _('added_tickets_text_some_rejected',
+                    default = "Successfully added ${added} invites but discarded ${rejected} "
+                    "since they already existed or were already used.",
+                    mapping={'added': added, 'rejected': rejected})
+        self.flash_messages.add(msg)
+        self.request.session['send_tickets.emails'] = emails
+        self.request.session['send_tickets.message'] = appstruct['message']
+        url = self.request.resource_url(self.context, 'send_tickets')
+        return HTTPFound(location = url)
 
 
 def vote_groups_active(context, request, *args, **kw):

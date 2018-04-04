@@ -12,6 +12,7 @@ from arche.interfaces import IEmailValidatedEvent
 from arche.interfaces import IUser
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
+from pyramid.traversal import find_root
 from repoze.catalog.query import Any, Eq
 from six import string_types
 from voteit.core.models.interfaces import IMeeting
@@ -54,6 +55,29 @@ class VoteGroups(IterableUserDict):
         for group in self.values():
             members.update(group.keys())
         return members
+
+    def get_emails(self, group_names=None, potential=True, validated=True):
+        if group_names is None:
+            group_names = self.keys()
+        root = find_root(self.context)
+        emails = set()
+        userids = set()
+        for group in self.values():
+            if group.name not in group_names:
+                continue
+            if potential:
+                emails.update(group.potential_members)
+                userids.update(group.keys())
+        for userid in userids:
+            try:
+                user = root['users'][userid]
+            except KeyError:
+                continue
+            if user.email:
+                if validated and not user.email_validated:
+                    continue
+                emails.add(user.email)
+        return emails
 
     def get_voters(self):
         voter_rights = set()
