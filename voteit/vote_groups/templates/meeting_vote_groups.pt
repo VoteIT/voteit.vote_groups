@@ -62,7 +62,7 @@
           action="${request.resource_path(context, '__vote_group_save_roles__', query = {'vote_group': vote_group.name})}"
           data-roles-container>
       <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group);
-                             primaries tuple(vote_group.primaries);">
+                             voters vote_group.get_voters()">
 
       <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
 
@@ -72,7 +72,7 @@
           <div class="col-xs-6">
               <span class="glyphicon glyphicon-star-empty"></span>
               <tal:ts i18n:translate="">
-                  Potential voters: <b i18n:name="count">${len(primaries)}</b>
+                  Potential voters: <b i18n:name="count">${len(tuple(vote_group.primaries))}</b>
               </tal:ts>
           </div>
           <div class="col-xs-6">
@@ -86,7 +86,7 @@
           <div class="col-xs-6">
               <span class="glyphicon glyphicon-star"></span>
               <tal:ts i18n:translate="">
-                  Current voters: <b i18n:name="count">${sum([view.is_voter(x) for x in primaries])}</b>
+                  Current voters: <b i18n:name="count">${sum([view.is_voter(x) for x in vote_group])}</b>
               </tal:ts>
           </div>
           <div class="col-xs-6" tal:condition="has_qr">
@@ -96,7 +96,6 @@
               </tal:ts>
           </div>
       </div>
-
 
       <div class="btn-group hidden-print" role="group"
           tal:condition="request.is_moderator">
@@ -140,7 +139,12 @@
                 <span tal:condition="view.is_voter(userid)"
                       title="voter" i18n:attributes="title;"
                       class="glyphicon glyphicon-star"></span>
-                <span title="checked in" i18n:attributes="title;"
+                <span tal:condition="userid in voters and view.is_checked(userid) and not view.is_voter(userid)"
+                      title="user will get vote permission when voting register is updated"
+                      i18n:attributes="title;"
+                      class="glyphicon glyphicon-star-empty"></span>
+                <span tal:condition="has_qr and view.is_checked(userid)"
+                      title="checked in" i18n:attributes="title;"
                       class="glyphicon glyphicon-check"></span>
             </td>
             <td data-select-roles>
