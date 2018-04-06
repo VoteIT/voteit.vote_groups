@@ -15,7 +15,13 @@ class IVoteGroups(IDict):
         """ New meeting vote group. Returns id. """
 
     def get_standin_for(userid):
-        """ Return delegation where userid is a member, or None if nothing can be found. """
+        """ Return delegation where userid has a substitute, or None if nothing can be found. """
+
+    def get_primary_for(userid):
+        """ Return primary and group where userid is a substitute, or None if nothing can be found. """
+
+    def get_voting_group_for(userid):
+        """ Return group where userid has vote rights, or None if nothing can be found. """
 
     def get_members():
         """ Return set with all group members """

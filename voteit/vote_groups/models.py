@@ -50,6 +50,18 @@ class VoteGroups(IterableUserDict):
             if userid in group.assignments:
                 return group.assignments[userid]
 
+    def get_primary_for(self, userid):
+        for group in self.values():
+            primary_for = group.get_primary_for(userid)
+            if primary_for:
+                return primary_for, group
+        return None, None
+
+    def get_voting_group_for(self, userid):
+        for group in self.values():
+            if userid in group.get_voters():
+                return group
+
     def get_members(self):
         members = set()
         for group in self.values():
