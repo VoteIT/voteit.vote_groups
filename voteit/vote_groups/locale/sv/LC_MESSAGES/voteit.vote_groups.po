@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
 "POT-Creation-Date: 2018-04-06 10:16+0200\n"
-"PO-Revision-Date: 2018-02-27 12:03+0100\n"
+"PO-Revision-Date: 2018-04-06 08:18+0000\n"
 "Last-Translator: Weblate Admin <admin@example.com>\n"
 "Language-Team: Swedish <http://example.com/projects/voteit/voteit-"
 "vote_groups/sv/>\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.6\n"
+"X-Generator: Weblate 2.16\n"
 "Generated-By: Lingua 4.13\n"
 
 #: voteit/vote_groups/schemas.py:19
@@ -66,7 +66,7 @@ msgstr "Lägg till en per rad"
 
 #: voteit/vote_groups/schemas.py:96
 msgid "- Select -"
-msgstr ""
+msgstr "- Välj -"
 
 #: voteit/vote_groups/schemas.py:114
 msgid "Update electoral register too?"
@@ -272,17 +272,16 @@ msgstr "Återför"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:148
 msgid "Substitute for"
-msgstr ""
+msgstr "Ersättare för"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:151
 msgid "Substitute in group"
-msgstr ""
+msgstr "Ersättare i grupp"
 
 #. Used in sentence: "<dynamic element> <dynamic element>"
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:155
-#, fuzzy
 msgid "Voter in group"
-msgstr "Röstgrupper"
+msgstr "Rösträtt i grupp"
 
 #: voteit/vote_groups/templates/meeting_vote_groups.pt:154
 #, fuzzy
