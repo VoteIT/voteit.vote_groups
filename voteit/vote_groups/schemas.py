@@ -157,12 +157,6 @@ class AddGroupTicketsSchema(colander.Schema):
         colander.Set(),
         title=_("Roles"),
         default=(security.ROLE_VIEWER, security.ROLE_DISCUSS, security.ROLE_PROPOSE),
-        description=_(
-            "add_tickets_roles_description",
-            default=u"""One user can have more than one role. Note that to be able to propose,
-                        discuss and vote you need respective role. This is selected by default. If you want
-                        to add a user that can only view, select View and uncheck everything else."""
-        ),
         widget=deform.widget.CheckboxChoiceWidget(values=_GROUP_ADJUSTED_ROLES, ),
     )
     message = colander.SchemaNode(
