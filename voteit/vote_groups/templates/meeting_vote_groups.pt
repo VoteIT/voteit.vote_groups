@@ -56,11 +56,13 @@
 
   <div class="list-group"
        tal:define="groups (request.is_moderator or show_all) and vote_groups.sorted() or my_groups">
-    <div class="list-group-item" tal:repeat="vote_group groups">
+    <div class="list-group-item"
+         tal:repeat="vote_group groups">
     <form method="post"
           action="${request.resource_path(context, '__vote_group_save_roles__', query = {'vote_group': vote_group.name})}"
           data-roles-container>
-      <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group)">
+      <tal:group tal:define="has_standins vote_groups.get_free_standins(vote_group);
+                             primaries tuple(vote_group.primaries);">
 
       <h2 tal:content="vote_group.title and vote_group.title or vote_group.name">Title</h2>
 
@@ -68,16 +70,33 @@
 
       <div class="row">
           <div class="col-xs-6">
+              <span class="glyphicon glyphicon-star-empty"></span>
               <tal:ts i18n:translate="">
-                  Potential voters: <b i18n:name="count">${len(tuple(vote_group.primaries))}</b>
+                  Potential voters: <b i18n:name="count">${len(primaries)}</b>
               </tal:ts>
           </div>
           <div class="col-xs-6">
+              <span class="glyphicon glyphicon-exclamation-sign"></span>
               <tal:ts i18n:translate="">
                   Unregistered members: <b i18n:name="count">${len(vote_group.potential_members)}</b>
               </tal:ts>
           </div>
       </div>
+      <div class="row">
+          <div class="col-xs-6">
+              <span class="glyphicon glyphicon-star"></span>
+              <tal:ts i18n:translate="">
+                  Current voters: <b i18n:name="count">${sum([view.is_voter(x) for x in primaries])}</b>
+              </tal:ts>
+          </div>
+          <div class="col-xs-6" tal:condition="has_qr">
+              <span class="glyphicon glyphicon-check"></span>
+              <tal:ts i18n:translate="">
+                  Checked in: <b i18n:name="count">${sum([view.is_checked(x) for x in vote_group])}</b>
+              </tal:ts>
+          </div>
+      </div>
+
 
       <div class="btn-group hidden-print" role="group"
           tal:condition="request.is_moderator">
@@ -107,7 +126,7 @@
       <table class="table table-striped">
         <thead>
           <tr>
-            <th i18n:translate="">Member</th>
+            <th colspan="2" i18n:translate="">Member</th>
             <th i18n:translate="">Role</th>
             <th i18n:translate="">Stand-in</th>
           </tr>
@@ -117,9 +136,18 @@
             <td>
               <a tal:replace="structure request.creators_info([userid], portrait = False)">Userid</a>
             </td>
+            <td class="text-center">
+                <span tal:condition="view.is_voter(userid)"
+                      title="voter" i18n:attributes="title;"
+                      class="glyphicon glyphicon-star"></span>
+                <span title="checked in" i18n:attributes="title;"
+                      class="glyphicon glyphicon-check"></span>
+            </td>
             <td data-select-roles>
                 <select name="${userid}">
-                    <option tal:repeat="(value, desc) role_choices.items()" value="${value}" tal:attributes="selected role==value">${desc}</option>
+                    <option tal:repeat="(value, desc) role_choices.items()"
+                            value="${value}"
+                            tal:attributes="selected role==value">${desc}</option>
                 </select>
                 <span>${role_choices.get(role,role)}</span>
             </td>
@@ -139,26 +167,29 @@
                    href="#" i18n:translate="">No stand-ins available</a>
                 <a tal:condition="substitute_in_group"
                    class="btn btn-default btn-sm pull-right"
-                   href="${request.resource_url(context, 'release_standin', query = {'vote_group': vote_group.name, 'primary': userid})}"
+                   href="${request.resource_url(context, 'release_standin',
+                            query = {'vote_group': vote_group.name, 'primary': userid})}"
                    i18n:translate="">Release stand-in</a>
               </tal:actions>
               </tal:if>
               <tal:if condition="votes_for_user">
                   <tal:if condition="votes_for_group == vote_group">
-                      <tal:ts i18n:translate="">Substitute for</tal:ts> <a tal:replace="structure request.creators_info([votes_for_user], portrait = False)">User</a>
+                      <tal:ts i18n:translate="">Substitute for</tal:ts>
+                      <a tal:replace="structure request.creators_info([votes_for_user], portrait = False)">User</a>
                   </tal:if>
                   <tal:if condition="not substitute_in_group and votes_for_group != vote_group">
-                      <tal:ts i18n:translate="">Substitute in group</tal:ts> <em>${votes_for_group.title}</em>
+                      <tal:ts i18n:translate="">Substitute in group</tal:ts>
+                      <em>${votes_for_group.title}</em>
                   </tal:if>
               </tal:if>
-              <tal:if condition="role == 'standin' and voting_group and voting_group != vote_group and voting_group[userid] == 'primary'" i18n:translate="">
-                  <tal:ts i18n:translate="">Voter in group</tal:ts> <em>${voting_group.title}</em>
+              <tal:if condition="role == 'standin' and voting_group and voting_group != vote_group and voting_group[userid] == 'primary'">
+                  <tal:ts i18n:translate="">Voter in group</tal:ts>
+                  <em>${voting_group.title}</em>
               </tal:if>
             </td>
           </tr>
         </tbody>
       </table>
-
 
     </tal:group>
     </form>

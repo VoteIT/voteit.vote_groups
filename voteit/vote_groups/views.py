@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from arche.security import groupfinder
 from arche.views.base import BaseForm
 from arche.views.base import BaseView
 from arche.views.base import DefaultDeleteForm
@@ -14,6 +15,7 @@ from repoze.catalog.query import Eq
 
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
+from voteit.core.security import ROLE_VOTER
 from voteit.core.views.control_panel import control_panel_category
 from voteit.core.views.control_panel import control_panel_link
 try:
@@ -62,6 +64,25 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
             'ongoing_polls': bool(_count_ongoing_poll(self.request)),
         }
         return response
+
+    def is_voter(self, userid):
+        try:
+            return self._cached_voters[userid]
+        except KeyError:
+            pass
+        except AttributeError:
+            self._cached_voters = {}
+        self._cached_voters[userid] = ROLE_VOTER in groupfinder(userid, self.request)
+        return self._cached_voters[userid]
+
+    def is_checked(self, userid):
+        return userid in self.pqr
+
+    @reify
+    def pqr(self):
+        if IPresenceQR:
+            return IPresenceQR(self.context, ())
+        return ()
 
     @view_config(name="add_vote_group", context=IMeeting, permission=security.MODERATE_MEETING)
     def add_vote_group(self):
