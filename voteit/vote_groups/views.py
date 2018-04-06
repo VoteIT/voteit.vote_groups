@@ -364,7 +364,7 @@ class AddGroupTicketsForm(BaseForm):
                     "since they already existed or were already used.",
                     mapping={'added': added, 'rejected': rejected})
         self.flash_messages.add(msg)
-        self.request.session['send_tickets.emails'] = emails
+        self.request.session['send_tickets.emails'] = list(emails)
         self.request.session['send_tickets.message'] = appstruct['message']
         url = self.request.resource_url(self.context, 'send_tickets')
         return HTTPFound(location = url)
@@ -414,6 +414,12 @@ def includeme(config):
         'control_panel_vote_groups', 'copy_vote_groups',
         title=_("Copy vote groups"),
         view_name='_copy_vote_groups',
+    )
+    config.add_view_action(
+        control_panel_link,
+        'control_panel_vote_groups', 'add_group_tickets',
+        title=_("Invite participants"),
+        view_name='add_group_tickets',
     )
     if IPresenceQR is not None:
         config.add_view_action(
