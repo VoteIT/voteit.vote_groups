@@ -238,8 +238,8 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
     def allowed(self):
         userid = self.request.authenticated_userid
         return self.request.is_moderator or (userid and userid == self.for_user) and \
-               userid not in self.group.assignments.values() and\
-               userid not in self.group.primaries
+               userid not in self.group.assignments and \
+               userid in self.group.primaries
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
