@@ -129,7 +129,6 @@ class UserValidatedEmailIntegrationTests(TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
-
     def tearDown(self):
         testing.tearDown()
 

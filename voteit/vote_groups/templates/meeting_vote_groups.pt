@@ -157,31 +157,36 @@
             </td>
             <td tal:define="(votes_for_user, votes_for_group) vote_groups.get_primary_for(userid);
                             voting_group vote_groups.get_voting_group_for(userid);
-                            substitute_in_group userid in vote_group.assignments;">
-              <tal:if condition="role == 'primary'">
-              <a tal:condition="substitute_in_group"
-                 tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
+                            has_substitute userid in vote_group.assignments;">
               <tal:actions tal:condition="not ongoing_polls and (request.is_moderator or request.authenticated_userid == userid)">
-                <a tal:condition="not substitute_in_group and has_standins"
-                   class="btn btn-default btn-sm pull-right"
-                   href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}"
-                   i18n:translate="">Choose stand-in</a>
-                <a tal:condition="not substitute_in_group and not has_standins"
-                   class="btn btn-default btn-sm disabled pull-right"
-                   href="#" i18n:translate="">No stand-ins available</a>
-                <a tal:condition="substitute_in_group"
+                  <tal:if condition="vote_group[userid] == 'primary'">
+                      <a tal:condition="not has_substitute and has_standins"
+                         class="btn btn-default btn-sm pull-right"
+                         href="${request.resource_url(context, 'assign_vote', query = {'vote_group': vote_group.name, 'primary': userid})}"
+                         i18n:translate="">Choose stand-in</a>
+                      <a tal:condition="not has_substitute and not has_standins"
+                         class="btn btn-default btn-sm disabled pull-right"
+                         href="#" i18n:translate="">No stand-ins available</a>
+                      <a tal:condition="has_substitute"
+                         class="btn btn-default btn-sm pull-right"
+                         href="${request.resource_url(context, 'release_standin',
+                            query = {'vote_group': vote_group.name, 'primary': userid})}"
+                         i18n:translate="">Release stand-in</a>
+                  </tal:if>
+                <a tal:condition="votes_for_group == vote_group and request.authenticated_userid == userid"
                    class="btn btn-default btn-sm pull-right"
                    href="${request.resource_url(context, 'release_standin',
-                            query = {'vote_group': vote_group.name, 'primary': userid})}"
+                            query = {'vote_group': vote_group.name, 'primary': votes_for_user})}"
                    i18n:translate="">Release stand-in</a>
               </tal:actions>
-              </tal:if>
-              <tal:if condition="votes_for_user">
+              <a tal:condition="has_substitute"
+                 tal:replace="structure request.creators_info([vote_group.assignments[userid]], portrait = False)">Userid</a>
+              <tal:if condition="votes_for_user and not has_substitute">
                   <tal:if condition="votes_for_group == vote_group">
                       <tal:ts i18n:translate="">Substitute for</tal:ts>
                       <a tal:replace="structure request.creators_info([votes_for_user], portrait = False)">User</a>
                   </tal:if>
-                  <tal:if condition="not substitute_in_group and votes_for_group != vote_group">
+                  <tal:if condition="votes_for_group != vote_group">
                       <tal:ts i18n:translate="">Substitute in group</tal:ts>
                       <em>${votes_for_group.title}</em>
                   </tal:if>

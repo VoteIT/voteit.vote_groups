@@ -100,8 +100,11 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         group_name = self.request.GET.get('vote_group')
         group = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)[group_name]
         primary = self.request.GET.get('primary')
-        if not self.request.is_moderator and \
-           self.request.authenticated_userid != primary:
+        if not any((
+            self.request.is_moderator,
+            self.request.authenticated_userid == primary,
+            self.request.authenticated_userid == self.group.assignments.get(primary),
+        )):
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
         del group.assignments[primary]
         url = self.request.resource_url(self.context, 'vote_groups')
