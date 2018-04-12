@@ -38,13 +38,31 @@ class IVoteGroups(IDict):
         """ Return set with all group members """
 
     def get_voters():
-        """ Return set of users with current vote rights """
+        """ Return set of users with current vote rights according to groups """
 
     def get_primaries(exclude_group):
         """ Return set with all primary voters, excluding exclude_group if present """
 
     def get_free_standins(group):
         """ Return set with free stand-ins for vote group """
+
+    def copy_from_meeting(meeting):
+        """ Transfer all groups from another meeting, if they don't already exist. """
+
+    def can_substitute(userid, group):
+        """ Check if user is available as substitute in group """
+
+    def can_assign(userid, group):
+        """ Check if user can assign it's vote in group """
+
+    def can_set_role(userid, role, group):
+        """ Check if user can have a certains role """
+
+    def assign_vote(from_userid, to_userid, group):
+        """ Assign vote from/to user in group. Fire event when assigned. """
+
+    def set_role(userid, role, group, request=None):
+        """ Set role for user in group. Fire event when role is set. """
 
 
 class IVoteGroup(IDict):
@@ -65,7 +83,11 @@ class IVoteGroup(IDict):
         """ Return userids with role"""
 
     def get_voters():
-        """ Return voters"""
+        """ Return set of users with current vote rights according to group """
 
     def get_primary_for(userid):
         """ Who made this userid a voter? """
+
+
+class IAssignmentChanged(Interface):
+    group = Attribute("Vote group with chenges")

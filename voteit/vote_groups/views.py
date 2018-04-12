@@ -32,15 +32,10 @@ from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 from voteit.vote_groups.mixins import VoteGroupEditMixin
+from voteit.vote_groups.models import _count_ongoing_poll
 
 
-
-_poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
 _polls_ongoing_msg = _("Note! Polls ongoing within meeting!")
-
-def _count_ongoing_poll(request):
-    query = _poll_query & Eq('path', resource_path(request.meeting))
-    return request.root.catalog.query(query)[0].total
 
 
 def _block_during_ongoing_poll(request):

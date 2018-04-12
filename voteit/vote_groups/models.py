@@ -12,8 +12,10 @@ from arche.interfaces import IUser
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import find_root
+from pyramid.traversal import resource_path
 from repoze.catalog.query import Any, Eq
 from six import string_types
+
 from voteit.core.models.interfaces import IMeeting
 from zope.copy import copy
 from zope.component import adapter
@@ -22,7 +24,20 @@ from zope.interface import implementer
 from voteit.vote_groups import _
 from voteit.vote_groups.interfaces import IVoteGroup
 from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.interfaces import ROLE_STANDIN
+from voteit.vote_groups.interfaces import ROLE_PRIMARY
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
+from voteit.vote_groups.events import AssignmentChanged
+from voteit.vote_groups.exceptions import GroupPermissionsException
+
+
+def _count_ongoing_poll(request=None):
+    _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
+    if request is None:
+        request = get_current_request()
+
+    query = _poll_query & Eq('path', resource_path(request.meeting))
+    return request.root.catalog.query(query)[0].total
 
 
 @implementer(IVoteGroups)
@@ -99,6 +114,14 @@ class VoteGroups(IterableUserDict):
             voter_rights.update(grp.get_voters())
         return voter_rights
 
+    @property
+    def voters(self):
+        try:
+            return self._voters
+        except AttributeError:
+            self._voters = self.get_voters()
+            return self._voters
+
     def get_primaries(self, exclude_group=None):
         all_primaries = set()
         for group in filter(lambda g: g != exclude_group, self.values()):
@@ -112,7 +135,8 @@ class VoteGroups(IterableUserDict):
         return filter(lambda g: userid in g, self.sorted())
 
     def get_free_standins(self, group):
-        return set(group.standins).difference(self.get_voters())
+        # type: (VoteGroup) -> set
+        return set(group.standins).difference(self.voters)
 
     def __setitem__(self, key, vg):
         assert IVoteGroup.providedBy(vg)
@@ -130,7 +154,7 @@ class VoteGroups(IterableUserDict):
             for group in self.values():
                 if user.email in group.potential_members:
                     group.potential_members.remove(user.email)
-                    group[user.userid] = 'standin'
+                    group[user.userid] = ROLE_STANDIN
 
     def copy_from_meeting(self, meeting):
         """ Transfer all groups from another meeting, if they don't already exist.
@@ -144,6 +168,42 @@ class VoteGroups(IterableUserDict):
                 self[name].assignments.clear()
                 counter += 1
         return counter
+
+    def can_substitute(self, userid, group):
+        # type: (string_types, VoteGroup) -> bool
+        return userid in self.get_free_standins(group)
+
+    def can_assign(self, userid, group):
+        # type: (string_types, VoteGroup) -> bool
+        return bool(userid in group.primaries and
+                    userid not in group.assignments and
+                    self.get_free_standins(group))
+
+    def can_set_role(self, userid, role, group, request=None):
+        # type: (string_types, VoteGroup) -> bool
+        assert role in dict(VOTE_GROUP_ROLES), 'Role does not exist'
+        if _count_ongoing_poll(request):
+            return False
+        if role == ROLE_PRIMARY and userid in self.voters:
+            return False
+        return userid in group
+
+    def assign_vote(self, from_userid, to_userid, group):
+        if not self.can_assign(from_userid, group) or not self.can_substitute(to_userid, group):
+            raise GroupPermissionsException('Cannot assign vote')
+        group.assignments[from_userid] = to_userid
+        self.notify_changed(group)
+
+    def set_role(self, userid, role, group, request=None):
+        if not self.can_set_role(userid, role, group, request):
+            raise GroupPermissionsException('Cannot set role')
+        group[userid] = role
+        self.notify_changed(group)
+
+    def notify_changed(self, group):
+        # TODO Fire an event
+        # Something like:
+        AssignmentChanged(group)
 
 
 @implementer(IVoteGroup)
@@ -171,11 +231,11 @@ class VoteGroup(Persistent, IterableUserDict):
 
     @property
     def primaries(self):
-        return self.get_roles('primary')
+        return self.get_roles(ROLE_PRIMARY)
 
     @property
     def standins(self):
-        return self.get_roles('standin')
+        return self.get_roles(ROLE_STANDIN)
 
     def get_voters(self):
         """
@@ -216,7 +276,7 @@ class VoteGroup(Persistent, IterableUserDict):
         for userid in previous.difference(incoming):
             del self[userid]
         for userid in incoming.difference(previous):
-            self[userid] = 'standin'
+            self[userid] = ROLE_STANDIN
         if set(self.potential_members) != potential_members:
             self.potential_members.clear()
             self.potential_members.update(potential_members)
