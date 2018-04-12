@@ -14,6 +14,7 @@ requires = (
     'pyramid',
     'voteit.core',
     'typing',
+    'zope.copy',
 )
 
 

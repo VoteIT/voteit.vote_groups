@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from UserDict import IterableUserDict
-from copy import deepcopy
 from persistent import Persistent
 from uuid import uuid4
 
@@ -16,12 +15,14 @@ from pyramid.traversal import find_root
 from repoze.catalog.query import Any, Eq
 from six import string_types
 from voteit.core.models.interfaces import IMeeting
+from zope.copy import copy
 from zope.component import adapter
 from zope.interface import implementer
 
 from voteit.vote_groups import _
 from voteit.vote_groups.interfaces import IVoteGroup
 from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 
 
 @implementer(IVoteGroups)
@@ -51,6 +52,7 @@ class VoteGroups(IterableUserDict):
                 return group.assignments[userid]
 
     def get_primary_for(self, userid):
+        """ Get the userid and group for who 'userid' replaces. """
         for group in self.values():
             primary_for = group.get_primary_for(userid)
             if primary_for:
@@ -112,9 +114,11 @@ class VoteGroups(IterableUserDict):
     def get_free_standins(self, group):
         return set(group.standins).difference(self.get_voters())
 
-    def __setitem__(self, key, value):
-        assert IVoteGroup.providedBy(value)
-        self.data[key] = value
+    def __setitem__(self, key, vg):
+        assert IVoteGroup.providedBy(vg)
+        # To make traversal work
+        vg.__parent__ = self.context
+        self.data[key] = vg
 
     def __nonzero__(self):
         """ This object should be "true" even if it has no content. """
@@ -135,7 +139,7 @@ class VoteGroups(IterableUserDict):
         counter = 0
         for (name, vote_group) in new_vote_groups.items():
             if name not in self:
-                self[name] = deepcopy(vote_group)
+                self[name] = copy(vote_group)
                 #Clear all asignments
                 self[name].assignments.clear()
                 counter += 1
@@ -146,6 +150,7 @@ class VoteGroups(IterableUserDict):
 class VoteGroup(Persistent, IterableUserDict):
     title = ""
     description = ""
+    __parent__ = None
 
     def __init__(self, name, title="", description=""):
         self.name = name
@@ -173,6 +178,9 @@ class VoteGroup(Persistent, IterableUserDict):
         return self.get_roles('standin')
 
     def get_voters(self):
+        """
+        :return: Set of userids who are potential voters for this group.
+        """
         return set(
             list(self.assignments.values()) +
             filter(lambda userid: userid not in self.assignments, self.primaries)

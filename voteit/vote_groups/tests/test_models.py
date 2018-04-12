@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from pyramid import testing
 from pyramid.request import apply_request_extensions
+from voteit.core.models.interfaces import IMeeting
 from voteit.core.testing_helpers import bootstrap_and_fixture
 from zope.interface.verify import verifyClass
 from zope.interface.verify import verifyObject
@@ -78,6 +79,12 @@ class VoteGroupsTests(TestCase):
         group['five'] = 'standin'
         group['one'] = 'standin'
         self.assertEqual(groups.get_free_standins(group), {'five'})
+
+    def test_traversal(self):
+        groups = self._mk_one()
+        name = groups.new()
+        group = groups[name]
+        self.failUnless(IMeeting.providedBy(group.__parent__))
 
 
 class VoteGroupTests(TestCase):

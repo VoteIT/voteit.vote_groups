@@ -5,6 +5,17 @@ from pyramid.interfaces import IDict
 from zope.interface import Interface
 from zope.interface import Attribute
 
+from voteit.vote_groups import _
+
+
+ROLE_PRIMARY = 'primary'
+ROLE_STANDIN = 'standin'
+# None is also valid, but only in case user was removed from the group
+VOTE_GROUP_ROLES = (
+    (ROLE_PRIMARY, _('Primary')),
+    (ROLE_STANDIN, _('Stand-in')),
+)
+
 
 class IVoteGroups(IDict):
     """ An adapter that handles meeting vote groups. Adapts a meeting.

@@ -17,12 +17,6 @@ from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 
-ROLE_CHOICES = (
-    ('primary', _('Primary')),
-    ('standin', _('Stand-in')),
-)
-
-
 @colander.deferred
 class VoteGroupValidator(VoteGroupEditMixin):
 

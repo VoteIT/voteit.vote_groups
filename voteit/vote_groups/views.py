@@ -30,8 +30,9 @@ except ImportError:
 from voteit.vote_groups import _
 from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 from voteit.vote_groups.mixins import VoteGroupEditMixin
-from voteit.vote_groups.schemas import ROLE_CHOICES
+
 
 
 _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
@@ -58,7 +59,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         response = {
             'vote_groups': self.vote_groups,
             'my_groups': self.vote_groups.vote_groups_for_user(self.request.authenticated_userid),
-            'role_choices': dict(ROLE_CHOICES),
+            'role_choices': dict(VOTE_GROUP_ROLES),
             'has_qr': IPresenceQR is not None,
             'show_all': show_all,
             'ongoing_polls': bool(_count_ongoing_poll(self.request)),
@@ -120,7 +121,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         # TODO Load Schema(?), validate and save.
         group = self.group
         message = None
-        valid_roles = [r[0] for r in ROLE_CHOICES]
+        valid_roles = [r[0] for r in VOTE_GROUP_ROLES]
         changed = set()
         for userid, role in self.request.POST.items():
             if userid in group and group[userid] != role:
@@ -430,13 +431,13 @@ def includeme(config):
     config.add_view_action(
         control_panel_link,
         'control_panel_vote_groups', 'vote_groups',
-        title=_("Manage vote groups"),
+        title=_("Manage"),
         view_name='vote_groups',
     )
     config.add_view_action(
         control_panel_link,
         'control_panel_vote_groups', 'copy_vote_groups',
-        title=_("Copy vote groups"),
+        title=_("Copy from another meeting"),
         view_name='_copy_vote_groups',
     )
     config.add_view_action(
