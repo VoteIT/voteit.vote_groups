@@ -16,7 +16,7 @@ class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
         if request is None:
             request = get_current_request()
         meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
-        groups = IVoteGroups(self.context)
+        groups = request.registry.getMultiAdapter((self.context, request), IVoteGroups)
         return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
 
 

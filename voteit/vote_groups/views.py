@@ -7,7 +7,7 @@ from arche.views.base import BaseView
 from arche.views.base import DefaultDeleteForm
 from arche.views.base import DefaultEditForm
 from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPForbidden
+from pyramid.httpexceptions import HTTPForbidden, HTTPNotFound
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 from voteit.core import security
@@ -28,7 +28,7 @@ from voteit.vote_groups import _
 from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
-from voteit.vote_groups.mixins import VoteGroupEditMixin
+from voteit.vote_groups.mixins import VoteGroupEditMixin, VoteGroupMixin
 from voteit.vote_groups.models import _count_ongoing_poll
 from voteit.vote_groups.models import apply_adjust_meeting_roles
 
@@ -92,7 +92,10 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         """
         _block_during_ongoing_poll(self.request)
         group_name = self.request.GET.get('vote_group')
-        group = self.request.registry.getAdapter(self.request.meeting, IVoteGroups)[group_name]
+        try:
+            group = self.vote_groups[group_name]
+        except KeyError:
+            raise HTTPNotFound("No such group")
         primary = self.request.GET.get('primary')
         if not any((
             self.request.is_moderator,
@@ -262,7 +265,7 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
              context=IMeeting,
              permission=security.MODERATE_MEETING,
              renderer="arche:templates/form.pt")
-class ApplyQRPermissionsForm(BaseForm):
+class ApplyQRPermissionsForm(BaseForm, VoteGroupMixin):
     """ Apply permissions """
     type_name = 'VoteGroup'
     schema_name = 'apply_qr_present'
@@ -290,7 +293,7 @@ class ApplyQRPermissionsForm(BaseForm):
                 er.new_register(userids)
 
     def save_success(self, appstruct):
-        groups = IVoteGroups(self.context)
+        groups = self.vote_groups
         qr = IPresenceQR(self.context)
         new_voters = groups.get_voters().intersection(qr)
         current_voters = security.find_role_userids(self.context, security.ROLE_VOTER)
@@ -317,7 +320,7 @@ class ApplyQRPermissionsForm(BaseForm):
              context=IMeeting,
              permission=security.MODERATE_MEETING,
              renderer="arche:templates/form.pt")
-class CopyFromOtherMeetingForm(BaseForm):
+class CopyFromOtherMeetingForm(BaseForm, VoteGroupMixin):
     """ Copy groups from another meeting """
     type_name = 'VoteGroup'
     schema_name = 'copy'
@@ -326,7 +329,7 @@ class CopyFromOtherMeetingForm(BaseForm):
     def save_success(self, appstruct):
         meeting_name = appstruct['meeting_name']
         from_meeting = self.request.root[meeting_name]
-        groups = IVoteGroups(self.context)
+        groups = self.vote_groups
         copied_count = groups.copy_from_meeting(from_meeting)
         if copied_count:
             msg = _("Copied ${count} groups", mapping = {'count': copied_count})
@@ -341,7 +344,7 @@ class CopyFromOtherMeetingForm(BaseForm):
              context = IMeeting,
              renderer = "arche:templates/form.pt",
              permission = security.ADD_INVITE_TICKET)
-class AddGroupTicketsForm(BaseForm):
+class AddGroupTicketsForm(BaseForm, VoteGroupMixin):
     schema_name = 'add_group_tickets'
     type_name = 'VoteGroup'
 
@@ -353,8 +356,7 @@ class AddGroupTicketsForm(BaseForm):
 
     def add_success(self, appstruct):
         groups = appstruct['groups']
-        vote_groups = IVoteGroups(self.context)
-        emails = vote_groups.get_emails(group_names=groups)
+        emails = self.vote_groups.get_emails(group_names=groups)
         roles = appstruct['roles']
         added = 0
         rejected = 0
@@ -391,14 +393,10 @@ class AddGroupTicketsForm(BaseForm):
              context = IMeeting,
              renderer = "arche:templates/form.pt",
              permission = security.MODERATE_MEETING)
-class SettingsForm(BaseForm):
+class SettingsForm(BaseForm, VoteGroupMixin):
     schema_name = 'settings'
     type_name = 'VoteGroup'
     title = _("Vote Group settings")
-
-    @reify
-    def vote_groups(self):
-        return IVoteGroups(self.context)
 
     @property
     def buttons(self):
@@ -426,7 +424,7 @@ class SettingsForm(BaseForm):
 
 
 def vote_groups_active(context, request, *args, **kw):
-    vote_groups = request.registry.queryAdapter(request.meeting, IVoteGroups)
+    vote_groups = request.registry.queryMultiAdapter((request.meeting, request), IVoteGroups)
     if vote_groups:
         return bool(len(vote_groups))
     return False

@@ -27,7 +27,7 @@ class VoteGroupsTests(TestCase):
 
     def _mk_one(self):
         from voteit.core.models.meeting import Meeting
-        groups = self._cut(Meeting())
+        groups = self._cut(Meeting(), testing.DummyRequest())
         name = groups.new()
         group = groups[name]
         group['one'] = 'standin'
@@ -110,7 +110,7 @@ class VoteGroupTests(TestCase):
     def _mk_one(self):
         from voteit.core.models.meeting import Meeting
         from voteit.vote_groups.models import VoteGroups
-        groups = VoteGroups(Meeting())
+        groups = VoteGroups(Meeting(), testing.DummyRequest())
         name = groups.new()
         group = groups[name]
         group['one'] = 'standin'
@@ -160,7 +160,7 @@ class UserValidatedEmailIntegrationTests(TestCase):
         self.config.begin(request)
         root['m'] = m = Meeting()
         root['users']['jane'] = user = User(email='hello@world.org', email_validated=True)
-        groups = VoteGroups(m)
+        groups = VoteGroups(m, request)
         name = groups.new()
         group = groups[name]
         group.potential_members.add('hello@world.org')

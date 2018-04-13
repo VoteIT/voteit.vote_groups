@@ -7,11 +7,14 @@ from pyramid.httpexceptions import HTTPNotFound
 from voteit.vote_groups.interfaces import IVoteGroups
 
 
-class VoteGroupEditMixin(object):
+class VoteGroupMixin(object):
 
     @reify
     def vote_groups(self):
-        return self.request.registry.getAdapter(self.request.meeting, IVoteGroups)
+        return self.request.registry.getMultiAdapter((self.request.meeting, self.request), IVoteGroups)
+
+
+class VoteGroupEditMixin(VoteGroupMixin):
 
     @reify
     def group_name(self):

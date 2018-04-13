@@ -20,6 +20,10 @@ from voteit.vote_groups.mixins import VoteGroupEditMixin
 _GROUP_ADJUSTED_ROLES = [(k, v) for (k, v) in security.STANDARD_ROLES if k != security.ROLE_VOTER]
 
 
+def _getvg(meeting, request):
+    return request.registry.getMultiAdapter((meeting, request), IVoteGroups)
+
+
 @colander.deferred
 class VoteGroupValidator(VoteGroupEditMixin):
 
@@ -87,7 +91,7 @@ class EditVoteGroupSchema(colander.Schema):
 @colander.deferred
 def deferred_choices_widget(node, kw):
     request = kw['request']
-    groups = IVoteGroups(request.meeting)
+    groups = _getvg(request.meeting, request)
     group_name = request.GET.get('vote_group', None)
     try:
         group = groups[group_name]
@@ -131,14 +135,16 @@ class CopyFromOtherMeetingSchema(colander.Schema):
 @colander.deferred
 def all_group_ids(node, kw):
     context = kw['context']
-    groups = IVoteGroups(context)
+    request = kw['request']
+    groups = _getvg(context, request)
     return set(groups.keys())
 
 
 @colander.deferred
 def selectable_groups_widget(node, kw):
     context = kw['context']
-    groups = IVoteGroups(context)
+    request = kw['request']
+    groups = _getvg(context, request)
     values = []
     for group in groups.sorted():
         title = "%s (%s)" % (group.title, len(group))

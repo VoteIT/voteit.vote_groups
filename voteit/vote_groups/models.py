@@ -10,6 +10,7 @@ from BTrees.OOBTree import OOSet
 from arche.interfaces import IEmailValidatedEvent
 from arche.interfaces import IUser
 from pyramid.decorator import reify
+from pyramid.interfaces import IRequest
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import find_interface
 from pyramid.traversal import find_root
@@ -35,18 +36,18 @@ def _count_ongoing_poll(request=None):
     _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
     if request is None:
         request = get_current_request()
-
     query = _poll_query & Eq('path', resource_path(request.meeting))
     return request.root.catalog.query(query)[0].total
 
 
 @implementer(IVoteGroups)
-@adapter(IMeeting)
+@adapter(IMeeting, IRequest)
 class VoteGroups(object, IterableUserDict):
     """ See .interfaces.IVoteGroups """
 
-    def __init__(self, context):
+    def __init__(self, context, request):
         self.context = context
+        self.request = request
 
     @reify
     def data(self):
@@ -167,7 +168,7 @@ class VoteGroups(object, IterableUserDict):
     def copy_from_meeting(self, meeting):
         """ Transfer all groups from another meeting, if they don't already exist.
         """
-        new_vote_groups = IVoteGroups(meeting)
+        new_vote_groups = self.request.registry.getMultiAdapter((meeting, self.request), IVoteGroups)
         counter = 0
         for (name, vote_group) in new_vote_groups.items():
             if name not in self:
@@ -187,31 +188,32 @@ class VoteGroups(object, IterableUserDict):
                     userid not in group.assignments and
                     self.get_free_standins(group))
 
-    def can_set_role(self, userid, role, group, request=None):
+    def can_set_role(self, userid, role, group):
         # type: (string_types, VoteGroup) -> bool
         assert role in dict(VOTE_GROUP_ROLES), 'Role does not exist'
-        if _count_ongoing_poll(request):
+        if _count_ongoing_poll(self.request):
             return False
         if role == ROLE_PRIMARY and userid in self.voters:
             return False
         return userid in group
 
-    def assign_vote(self, from_userid, to_userid, group):
+    def assign_vote(self, from_userid, to_userid, group, event=True):
         if not self.can_assign(from_userid, group) or not self.can_substitute(to_userid, group):
             raise GroupPermissionsException('Cannot assign vote')
         group.assignments[from_userid] = to_userid
-        self.notify_changed(group)
+        if event:
+            self.notify_changed(group)
 
-    def set_role(self, userid, role, group, request=None):
-        if not self.can_set_role(userid, role, group, request):
+    def set_role(self, userid, role, group, event=True):
+        if not self.can_set_role(userid, role, group):
             raise GroupPermissionsException('Cannot set role')
         group[userid] = role
-        self.notify_changed(group)
+        if event:
+            self.notify_changed(group)
 
     def notify_changed(self, group):
-        # TODO Fire an event
-        # Something like:
-        AssignmentChanged(group)
+        event = AssignmentChanged(group, self.request)
+        self.request.registry.notify(event)
 
     def __repr__(self):
         klass = self.__class__
@@ -229,7 +231,6 @@ class VoteGroup(Persistent, IterableUserDict):
         self.name = name
         self.title = title
         self.description = description
-        #FIXME: Structure
         #Use userid as key and role as value, or none
         self.data = OOBTree()
         #Assigned
@@ -271,7 +272,7 @@ class VoteGroup(Persistent, IterableUserDict):
                     members=list(self.keys()),
                     potential_members="\n".join(self.potential_members))
 
-    def update_from_appstruct(self, appstruct, request):
+    def update_from_appstruct(self, appstruct):
         self.title = appstruct['title']
         self.description = appstruct['description']
         previous = set(self.keys())
@@ -280,7 +281,7 @@ class VoteGroup(Persistent, IterableUserDict):
         potential_members = set()
         found = 0
         for email in appstruct['potential_members'].splitlines():
-            user = request.root['users'].get_user_by_email(email, only_validated=True)
+            user = self.request.root['users'].get_user_by_email(email, only_validated=True)
             if user:
                 incoming.add(user.userid)
                 found += 1
@@ -295,15 +296,18 @@ class VoteGroup(Persistent, IterableUserDict):
             self.potential_members.update(potential_members)
 
 
-def apply_adjust_meeting_roles(meeting, group=None):
+def apply_adjust_meeting_roles(meeting, group=None, request=None):
     """
     Adjust meeting roles according to settings, if there are any settings for this meeting.
 
     :param meeting: Meeting object
     :param group: Only check members of this group
+    :param request: Current request
     """
     assert IMeeting.providedBy(meeting)
-    vote_groups = IVoteGroups(meeting, None)
+    if request is None:
+        request = get_current_request()
+    vote_groups = request.registry.queryMultiAdapter((meeting, request), IVoteGroups)
     if vote_groups is None:
         return
     assigned_voter_roles = vote_groups.settings.get('assigned_voter_roles', None)
@@ -338,8 +342,9 @@ def user_validated_email_subscriber(event):
     query = Eq('type_name', 'Meeting') & Any('workflow_state', ['ongoing', 'upcoming'])
     docids = request.root.catalog.query(query)[1]
     for meeting in request.resolve_docids(docids, perm=None):
-        vote_groups = IVoteGroups(meeting, None)
-        vote_groups.email_validated(user)
+        vote_groups = request.registry.queryMultiAdapter((meeting, request), IVoteGroups)
+        if vote_groups is not None:
+            vote_groups.email_validated(user)
 
 
 def adjust_roles_after_assignment(event):
