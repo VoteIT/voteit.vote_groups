@@ -334,7 +334,7 @@ class CopyFromOtherMeetingForm(BaseForm):
         else:
             msg = _("No groups to copy.")
             self.flash_messages.add(msg, type='warning')
-        return HTTPFound(location=self.request.resource_url(self.context))
+        return HTTPFound(location=self.request.resource_url(self.context, 'vote_groups'))
 
 
 @view_config(name = "add_group_tickets",
