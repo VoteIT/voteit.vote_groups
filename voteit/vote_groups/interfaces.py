@@ -21,6 +21,7 @@ class IVoteGroups(IDict):
     """ An adapter that handles meeting vote groups. Adapts a meeting.
         Implements a dict-like interface to handle VoteGroup objects.
     """
+    settings = Attribute("Settings")
 
     def new():
         """ New meeting vote group. Returns id. """

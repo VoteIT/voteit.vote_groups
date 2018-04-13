@@ -42,7 +42,7 @@ def _count_ongoing_poll(request=None):
 
 @implementer(IVoteGroups)
 @adapter(IMeeting)
-class VoteGroups(IterableUserDict):
+class VoteGroups(object, IterableUserDict):
     """ See .interfaces.IVoteGroups """
 
     def __init__(self, context):
@@ -55,6 +55,14 @@ class VoteGroups(IterableUserDict):
         except AttributeError:
             self.context._vote_groups = OOBTree()
             return self.context._vote_groups
+
+    @property
+    def settings(self):
+        return dict(getattr(self.context, '_vote_groups_settings', {}))
+    @settings.setter
+    def settings(self, value):
+        if value != self.settings:
+            self.context._vote_groups_settings = OOBTree(value)
 
     def new(self):
         name = unicode(uuid4())
@@ -205,6 +213,11 @@ class VoteGroups(IterableUserDict):
         # Something like:
         AssignmentChanged(group)
 
+    def __repr__(self):
+        klass = self.__class__
+        classname = '%s.%s' % (klass.__module__, klass.__name__)
+        return '<%s adapter at %#x>' % (classname, id(self))
+
 
 @implementer(IVoteGroup)
 class VoteGroup(Persistent, IterableUserDict):
@@ -280,6 +293,40 @@ class VoteGroup(Persistent, IterableUserDict):
         if set(self.potential_members) != potential_members:
             self.potential_members.clear()
             self.potential_members.update(potential_members)
+
+
+def apply_adjust_meeting_roles(meeting, group=None):
+    """
+    Adjust meeting roles according to settings, if there are any settings for this meeting.
+
+    :param meeting: Meeting object
+    :param group: Only check members of this group
+    """
+    assert IMeeting.providedBy(meeting)
+    vote_groups = IVoteGroups(meeting, None)
+    if vote_groups is None:
+        return
+    assigned_voter_roles = vote_groups.settings.get('assigned_voter_roles', None)
+    if not assigned_voter_roles:
+        # System is inactive
+        return
+    inactive_voter_roles = vote_groups.settings.get('inactive_voter_roles', set())
+    remove_on_inactive = assigned_voter_roles.difference(inactive_voter_roles)
+    if group:
+        # Only for a specific group
+        assigned_voter_members = group.get_voters()
+        members = set(group.keys())
+    else:
+        # Check all
+        assigned_voter_members = vote_groups.get_voters()
+        members = vote_groups.get_members()
+    inactive_voters_members = members.difference(assigned_voter_members)
+    roles = meeting.local_roles
+    for userid in assigned_voter_members:
+        roles.add(userid, assigned_voter_roles, event=False)
+    for userid in inactive_voters_members:
+        roles.remove(userid, remove_on_inactive, event=False)
+    roles.send_event()
 
 
 def user_validated_email_subscriber(event):

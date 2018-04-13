@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from BTrees.OOBTree import OOBTree
 from pyramid import testing
 from pyramid.request import apply_request_extensions
 from voteit.core.models.interfaces import IMeeting
@@ -85,6 +86,12 @@ class VoteGroupsTests(TestCase):
         name = groups.new()
         group = groups[name]
         self.failUnless(IMeeting.providedBy(group.__parent__))
+
+    def test_settings(self):
+        groups = self._mk_one()
+        groups.settings = {'hello': 'world'}
+        self.assertEqual({'hello': 'world'}, groups.settings)
+        self.assertIsInstance(groups.context._vote_groups_settings, OOBTree)
 
 
 class VoteGroupTests(TestCase):

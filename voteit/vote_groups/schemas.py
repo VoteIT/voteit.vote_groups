@@ -17,6 +17,9 @@ from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 
 
+_GROUP_ADJUSTED_ROLES = [(k, v) for (k, v) in security.STANDARD_ROLES if k != security.ROLE_VOTER]
+
+
 @colander.deferred
 class VoteGroupValidator(VoteGroupEditMixin):
 
@@ -125,9 +128,6 @@ class CopyFromOtherMeetingSchema(colander.Schema):
     )
 
 
-_GROUP_ADJUSTED_ROLES = [(k, v) for (k, v) in security.STANDARD_ROLES if k != security.ROLE_VOTER]
-
-
 @colander.deferred
 def all_group_ids(node, kw):
     context = kw['context']
@@ -173,9 +173,48 @@ class AddGroupTicketsSchema(colander.Schema):
     )
 
 
+@colander.deferred
+class VoteGroupsSettingsValidator(object):
+
+    def __init__(self, node, kw):
+        pass
+
+    def __call__(self, node, value):
+        # Raised if trouble
+        exc = colander.Invalid(node)
+        assigned_voter_roles = value['assigned_voter_roles']
+        inactive_voter_roles = value['inactive_voter_roles']
+        if inactive_voter_roles.difference(assigned_voter_roles):
+            exc['inactive_voter_roles'] = _("Inactive users assigned more roles than active")
+            raise exc
+
+
+class VoteGroupsSettingsSchema(colander.Schema):
+    validator = VoteGroupsSettingsValidator
+    assigned_voter_roles = colander.SchemaNode(
+        colander.Set(),
+        title = _("Assigned voter roles"),
+        description = _("Assigned to anyone who's currently active as a voter, "
+                        "either as replacement or primary."),
+        widget=deform.widget.CheckboxChoiceWidget(values=_GROUP_ADJUSTED_ROLES),
+    )
+    inactive_voter_roles = colander.SchemaNode(
+        colander.Set(),
+        title = _("Inactive voter roles"),
+        description = _("Any difference between this and the assigned status will be removed "
+                        "from any user who's currently not assigned to anything."),
+        widget=deform.widget.CheckboxChoiceWidget(values=_GROUP_ADJUSTED_ROLES),
+    )
+    apply_now = colander.SchemaNode(
+        colander.Bool(),
+        title = _("Apply now?"),
+    )
+
+
 def includeme(config):
     config.add_schema('VoteGroup', EditVoteGroupSchema, 'edit')
     config.add_schema('VoteGroup', AssignVoteSchema, 'assign')
     config.add_schema('VoteGroup', ApplyQRPresentVotersSchema, 'apply_qr_present')
     config.add_schema('VoteGroup', CopyFromOtherMeetingSchema, 'copy')
     config.add_schema('VoteGroup', AddGroupTicketsSchema, 'add_group_tickets')
+    config.add_schema('VoteGroup', VoteGroupsSettingsSchema, 'settings')

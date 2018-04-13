@@ -9,10 +9,7 @@ from arche.views.base import DefaultEditForm
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPFound
-from pyramid.traversal import resource_path
 from pyramid.view import view_config
-from repoze.catalog.query import Eq
-
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
 from voteit.core.security import ROLE_VOTER
@@ -33,6 +30,7 @@ from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 from voteit.vote_groups.mixins import VoteGroupEditMixin
 from voteit.vote_groups.models import _count_ongoing_poll
+from voteit.vote_groups.models import apply_adjust_meeting_roles
 
 
 _polls_ongoing_msg = _("Note! Polls ongoing within meeting!")
@@ -315,7 +313,6 @@ class ApplyQRPermissionsForm(BaseForm):
         return HTTPFound(location=self.request.resource_url(self.context))
 
 
-
 @view_config(name="_copy_vote_groups",
              context=IMeeting,
              permission=security.MODERATE_MEETING,
@@ -390,6 +387,44 @@ class AddGroupTicketsForm(BaseForm):
         return HTTPFound(location = url)
 
 
+@view_config(name = "vote_groups_settings",
+             context = IMeeting,
+             renderer = "arche:templates/form.pt",
+             permission = security.MODERATE_MEETING)
+class SettingsForm(BaseForm):
+    schema_name = 'settings'
+    type_name = 'VoteGroup'
+    title = _("Vote Group settings")
+
+    @reify
+    def vote_groups(self):
+        return IVoteGroups(self.context)
+
+    @property
+    def buttons(self):
+        return (self.button_save, self.button_cancel)
+
+    def appstruct(self):
+        appstruct = self.vote_groups.settings
+        appstruct['apply_now'] = True
+        return appstruct
+
+    def save_success(self, appstruct):
+        apply_now = appstruct.pop('apply_now')
+        self.vote_groups.settings = appstruct
+        if apply_now:
+            apply_adjust_meeting_roles(self.context)
+        else:
+            self.flash_messages.add(
+                _("Saved, updates will occur when assignments do."), type="success")
+        url = self.request.resource_url(self.context, 'vote_groups')
+        return HTTPFound(location = url)
+
+    def cancel_failure(self, *args):
+        url = self.request.resource_url(self.context, 'vote_groups')
+        return HTTPFound(location = url)
+
+
 def vote_groups_active(context, request, *args, **kw):
     vote_groups = request.registry.queryAdapter(request.meeting, IVoteGroups)
     if vote_groups:
@@ -428,6 +463,12 @@ def includeme(config):
         'control_panel_vote_groups', 'vote_groups',
         title=_("Manage"),
         view_name='vote_groups',
+    )
+    config.add_view_action(
+        control_panel_link,
+        'control_panel_vote_groups', 'settings',
+        title=_("Settings"),
+        view_name='vote_groups_settings',
     )
     config.add_view_action(
         control_panel_link,
