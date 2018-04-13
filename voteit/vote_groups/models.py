@@ -11,24 +11,24 @@ from arche.interfaces import IEmailValidatedEvent
 from arche.interfaces import IUser
 from pyramid.decorator import reify
 from pyramid.threadlocal import get_current_request
+from pyramid.traversal import find_interface
 from pyramid.traversal import find_root
 from pyramid.traversal import resource_path
 from repoze.catalog.query import Any, Eq
 from six import string_types
-
 from voteit.core.models.interfaces import IMeeting
-from zope.copy import copy
 from zope.component import adapter
+from zope.copy import copy
 from zope.interface import implementer
 
-from voteit.vote_groups import _
-from voteit.vote_groups.interfaces import IVoteGroup
-from voteit.vote_groups.interfaces import IVoteGroups
-from voteit.vote_groups.interfaces import ROLE_STANDIN
-from voteit.vote_groups.interfaces import ROLE_PRIMARY
-from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 from voteit.vote_groups.events import AssignmentChanged
 from voteit.vote_groups.exceptions import GroupPermissionsException
+from voteit.vote_groups.interfaces import IAssignmentChanged
+from voteit.vote_groups.interfaces import IVoteGroup
+from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.interfaces import ROLE_PRIMARY
+from voteit.vote_groups.interfaces import ROLE_STANDIN
+from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 
 
 def _count_ongoing_poll(request=None):
@@ -342,9 +342,15 @@ def user_validated_email_subscriber(event):
         vote_groups.email_validated(user)
 
 
+def adjust_roles_after_assignment(event):
+    meeting = find_interface(event.group, IMeeting)
+    apply_adjust_meeting_roles(meeting, event.group)
+
+
 def includeme(config):
     config.registry.registerAdapter(VoteGroups)
     config.add_subscriber(user_validated_email_subscriber, IEmailValidatedEvent)
+    config.add_subscriber(adjust_roles_after_assignment, IAssignmentChanged)
     try:
         from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
         has_irl = True
