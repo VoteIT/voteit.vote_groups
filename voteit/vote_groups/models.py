@@ -5,10 +5,10 @@ from UserDict import IterableUserDict
 from persistent import Persistent
 from uuid import uuid4
 
-from BTrees.OOBTree import OOBTree
-from BTrees.OOBTree import OOSet
 from arche.interfaces import IEmailValidatedEvent
 from arche.interfaces import IUser
+from BTrees.OOBTree import OOBTree
+from BTrees.OOBTree import OOSet
 from pyramid.decorator import reify
 from pyramid.interfaces import IRequest
 from pyramid.threadlocal import get_current_request
@@ -17,6 +17,8 @@ from pyramid.traversal import find_root
 from pyramid.traversal import resource_path
 from repoze.catalog.query import Any, Eq
 from six import string_types
+from typing import Iterable
+
 from voteit.core.models.interfaces import IMeeting
 from zope.component import adapter
 from zope.copy import copy
@@ -32,22 +34,23 @@ from voteit.vote_groups.interfaces import ROLE_STANDIN
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 
 
-def _count_ongoing_poll(request=None):
-    _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
-    if request is None:
-        request = get_current_request()
-    query = _poll_query & Eq('path', resource_path(request.meeting))
-    return request.root.catalog.query(query)[0].total
-
-
 @implementer(IVoteGroups)
 @adapter(IMeeting, IRequest)
 class VoteGroups(object, IterableUserDict):
     """ See .interfaces.IVoteGroups """
 
-    def __init__(self, context, request):
+    def __init__(self, context, request=None):
         self.context = context
-        self.request = request
+        self.request = request or get_current_request()
+
+    @property
+    def ongoing_poll(self):
+        # type: () -> bool
+        _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
+        query = _poll_query & Eq('path', resource_path(self.context))
+        if self.request.root is not None:  # pragma: no cover
+            return self.request.root.catalog.query(query)[0].total > 0
+        return False
 
     @reify
     def data(self):
@@ -125,26 +128,31 @@ class VoteGroups(object, IterableUserDict):
 
     @property
     def voters(self):
-        try:
-            return self._voters
-        except AttributeError:
-            self._voters = self.get_voters()
-            return self._voters
+        # try:
+        #     return self._voters
+        # except AttributeError:
+        #     self._voters = self.get_voters()
+        #     return self._voters
+        return self.get_voters()
+        # TODO Cache this, but drop on any changes, even in individual groups.
 
     def get_primaries(self, exclude_group=None):
+        # type: (IVoteGroup) -> set[string_types]
         all_primaries = set()
         for group in filter(lambda g: g != exclude_group, self.values()):
             all_primaries.update(group.primaries)
         return all_primaries
 
     def sorted(self):
+        # type: () -> Iterable[IVoteGroup]
         return sorted(self.values(), key=lambda g: g.title.lower())
 
     def vote_groups_for_user(self, userid):
+        # type: (string_types) -> Iterable[IVoteGroup]
         return filter(lambda g: userid in g, self.sorted())
 
     def get_free_standins(self, group):
-        # type: (VoteGroup) -> set
+        # type: (IVoteGroup) -> set[string_types]
         return set(group.standins).difference(self.voters)
 
     def __setitem__(self, key, vg):
@@ -153,11 +161,14 @@ class VoteGroups(object, IterableUserDict):
         vg.__parent__ = self.context
         self.data[key] = vg
 
-    def __nonzero__(self):
+    def __bool__(self):
+        # type: () -> bool
         """ This object should be "true" even if it has no content. """
         return True
+    __nonzero__ = __bool__
 
     def email_validated(self, user):
+        # type: (IUser) -> None
         assert IUser.providedBy(user)
         if user.email:
             for group in self.values():
@@ -166,6 +177,7 @@ class VoteGroups(object, IterableUserDict):
                     group[user.userid] = ROLE_STANDIN
 
     def copy_from_meeting(self, meeting):
+        # type: (IMeeting) -> int
         """ Transfer all groups from another meeting, if they don't already exist.
         """
         new_vote_groups = self.request.registry.getMultiAdapter((meeting, self.request), IVoteGroups)
@@ -173,7 +185,7 @@ class VoteGroups(object, IterableUserDict):
         for (name, vote_group) in new_vote_groups.items():
             if name not in self:
                 self[name] = copy(vote_group)
-                #Clear all asignments
+                # Clear all assignments
                 self[name].assignments.clear()
                 counter += 1
         return counter
@@ -183,17 +195,18 @@ class VoteGroups(object, IterableUserDict):
         return userid in self.get_free_standins(group)
 
     def can_assign(self, userid, group):
-        # type: (string_types, VoteGroup) -> bool
-        return bool(userid in group.primaries and
+        # type: (string_types, IVoteGroup) -> bool
+        return bool(not self.ongoing_poll and
+                    userid in group.primaries and
                     userid not in group.assignments and
                     self.get_free_standins(group))
 
     def can_set_role(self, userid, role, group):
-        # type: (string_types, VoteGroup) -> bool
+        # type: (string_types, IVoteGroup) -> bool
         assert role in dict(VOTE_GROUP_ROLES), 'Role does not exist'
-        if _count_ongoing_poll(self.request):
+        if self.ongoing_poll:
             return False
-        if role == ROLE_PRIMARY and userid in self.voters:
+        if role == ROLE_PRIMARY and userid in self.get_primaries(exclude_group=group):
             return False
         return userid in group
 
@@ -205,6 +218,7 @@ class VoteGroups(object, IterableUserDict):
             self.notify_changed(group)
 
     def set_role(self, userid, role, group, event=True):
+        # type: (string_types, string_types, IVoteGroup, bool) -> None
         if not self.can_set_role(userid, role, group):
             raise GroupPermissionsException('Cannot set role')
         group[userid] = role
@@ -267,12 +281,14 @@ class VoteGroup(Persistent, IterableUserDict):
                 return k
 
     def appstruct(self):
+        # type: () -> dict
         return dict(title=self.title,
                     description=self.description,
                     members=list(self.keys()),
                     potential_members="\n".join(self.potential_members))
 
     def update_from_appstruct(self, appstruct):
+        # type: (dict) -> None
         self.title = appstruct['title']
         self.description = appstruct['description']
         previous = set(self.keys())
@@ -281,6 +297,7 @@ class VoteGroup(Persistent, IterableUserDict):
         potential_members = set()
         found = 0
         for email in appstruct['potential_members'].splitlines():
+            # FIXME: VoteGroup has no request object!
             user = self.request.root['users'].get_user_by_email(email, only_validated=True)
             if user:
                 incoming.add(user.userid)
@@ -297,6 +314,7 @@ class VoteGroup(Persistent, IterableUserDict):
 
 
 def apply_adjust_meeting_roles(meeting, group=None, request=None):
+    # type: (IMeeting, IVoteGroup, IRequest) -> None
     """
     Adjust meeting roles according to settings, if there are any settings for this meeting.
 
@@ -359,7 +377,7 @@ def includeme(config):
     try:
         from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
         has_irl = True
-    except ImportError:
+    except ImportError:  # pragma: no cover
         has_irl = True
     if has_irl:
         config.include('voteit.vote_groups.plugins.meeting_presence')

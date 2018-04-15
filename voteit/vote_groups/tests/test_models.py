@@ -1,15 +1,23 @@
+from __future__ import unicode_literals
+
 from unittest import TestCase
 
 from BTrees.OOBTree import OOBTree
 from pyramid import testing
 from pyramid.request import apply_request_extensions
-from voteit.core.models.interfaces import IMeeting
+from pyramid.traversal import find_root
+from voteit.vote_groups.exceptions import GroupPermissionsException
+
+from voteit.core.models.interfaces import IMeeting, IUser, IUsers
 from voteit.core.testing_helpers import bootstrap_and_fixture
 from zope.interface.verify import verifyClass
 from zope.interface.verify import verifyObject
 
+from voteit.vote_groups.interfaces import IAssignmentChanged
 from voteit.vote_groups.interfaces import IVoteGroup
 from voteit.vote_groups.interfaces import IVoteGroups
+from voteit.vote_groups.interfaces import ROLE_PRIMARY
+from voteit.vote_groups.interfaces import ROLE_STANDIN
 
 
 class VoteGroupsTests(TestCase):
@@ -30,13 +38,13 @@ class VoteGroupsTests(TestCase):
         groups = self._cut(Meeting(), testing.DummyRequest())
         name = groups.new()
         group = groups[name]
-        group['one'] = 'standin'
-        group['two'] = 'primary'
-        group['three'] = 'standin'
-        group.assignments['two'] = 'one'
+        group['one'] = ROLE_STANDIN
+        group['two'] = ROLE_PRIMARY
+        group['three'] = ROLE_STANDIN
+        groups.assign_vote('two', 'one', group)
         name = groups.new()
         group = groups[name]
-        group['three'] = 'primary'
+        group['three'] = ROLE_PRIMARY
         return groups
 
     def test_verify_class(self):
@@ -76,10 +84,65 @@ class VoteGroupsTests(TestCase):
         groups = self._mk_one()
         name = groups.new()
         group = groups[name]
-        group['four'] = 'primary'
-        group['five'] = 'standin'
-        group['one'] = 'standin'
+        group['four'] = ROLE_PRIMARY
+        group['five'] = ROLE_STANDIN
+        group['one'] = ROLE_STANDIN
+        self.assertEqual(groups.voters, {'one', 'three', 'four'})
         self.assertEqual(groups.get_free_standins(group), {'five'})
+
+    def test_get_primary_for(self):
+        groups = self._mk_one()
+        primary, group = groups.get_primary_for('one')
+        self.assertEqual(primary, 'two')
+        self.assertEqual((None, None), groups.get_primary_for('two'))
+
+    def test_get_voting_group_for(self):
+        groups = self._mk_one()
+        group1 = groups.get_voting_group_for('one')
+        group3 = groups.get_voting_group_for('three')
+        self.assertEqual(len(group1), 3)
+        self.assertEqual(len(group3), 1)
+
+    def test_assign_vote(self):
+        groups = self._mk_one()
+        group = groups.values()[0]
+        group['four'] = ROLE_PRIMARY
+        with self.assertRaises(GroupPermissionsException):
+            groups.assign_vote('four', 'one', group)
+
+    def test_set_role(self):
+        groups = self._mk_one()
+        name = groups.new()
+        group = groups[name]
+        group['one'] = ROLE_STANDIN
+        group['four'] = ROLE_STANDIN
+        with self.assertRaises(AssertionError):
+            groups.set_role('one', 'badness', group)
+        with self.assertRaises(GroupPermissionsException):
+            groups.set_role('two', ROLE_PRIMARY, group)
+
+    def test_set_role_event(self):
+        events = []
+
+        def subscriber(event):
+            events.append(event)
+        self.config.add_subscriber(subscriber, IAssignmentChanged)
+
+        groups = self._mk_one()  # Vote assigned, fires one event
+        name = groups.new()
+        group = groups[name]
+        group['five'] = ROLE_STANDIN
+        groups.set_role('five', ROLE_PRIMARY, group)  # Role assigned, fires one event
+        self.assertEqual(len(events), 2)
+        self.assertNotEqual(events[0].group, group)
+        self.assertEqual(events[1].group, group)
+
+    def test_get_emails(self):
+        # FIXME Test getting from userids also (need root['users'][userid])
+        groups = self._mk_one()
+        group = groups.values()[0]
+        group.potential_members.add('support@voteit.se')
+        self.assertEqual(groups.get_emails(), {'support@voteit.se'})
 
     def test_traversal(self):
         groups = self._mk_one()
@@ -92,6 +155,10 @@ class VoteGroupsTests(TestCase):
         groups.settings = {'hello': 'world'}
         self.assertEqual({'hello': 'world'}, groups.settings)
         self.assertIsInstance(groups.context._vote_groups_settings, OOBTree)
+
+    def test_repr(self):
+        groups = self._mk_one()
+        self.assertIn('<voteit.vote_groups.models.VoteGroups adapter', repr(groups))
 
 
 class VoteGroupTests(TestCase):
@@ -116,6 +183,8 @@ class VoteGroupTests(TestCase):
         group['one'] = 'standin'
         group['two'] = 'primary'
         group['three'] = 'standin'
+        group.potential_members.add('test@example.com')
+        group.potential_members.add('support@voteit.se')
         return group
 
     def test_verify_class(self):
@@ -136,6 +205,30 @@ class VoteGroupTests(TestCase):
         self.assertEqual(group.get_voters(), {'one'})
         self.assertEqual(group.get_primary_for('one'), 'two')
         self.assertIs(group.get_primary_for('two'), None)
+
+    def test_appstruct(self):
+        group = self._mk_one()
+        appstruct = group.appstruct()
+        self.assertIsInstance(appstruct, dict)
+        self.assertEqual(len(appstruct['members']), 3)
+        self.assertEqual(appstruct['potential_members'].split('\n'), ['support@voteit.se', 'test@example.com'])
+
+    def test_from_appstruct(self):
+        group = self._mk_one()
+        group.update_from_appstruct({
+            'title': 'Monty',
+            'description': 'python3',
+            'members': [
+                'zero',
+                'one',
+                'two',
+            ],
+            'potential_members': 'support@voteit.se',
+        })
+        self.assertEqual(group.title, 'Monty')
+        self.assertEqual(group.description, 'python3')
+        self.assertEqual(group.keys, {'zero', 'one', 'two'})
+        self.assertEqual(group.potential_members, 'support@voteit.se')
 
 
 class UserValidatedEmailIntegrationTests(TestCase):

@@ -7,8 +7,9 @@ from arche.views.base import BaseView
 from arche.views.base import DefaultDeleteForm
 from arche.views.base import DefaultEditForm
 from pyramid.decorator import reify
-from pyramid.httpexceptions import HTTPForbidden, HTTPNotFound
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
@@ -29,18 +30,10 @@ from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 from voteit.vote_groups.mixins import VoteGroupEditMixin, VoteGroupMixin
-from voteit.vote_groups.models import _count_ongoing_poll
 from voteit.vote_groups.models import apply_adjust_meeting_roles
 
 
 _polls_ongoing_msg = _("Note! Polls ongoing within meeting!")
-
-
-def _block_during_ongoing_poll(request):
-    if _count_ongoing_poll(request):
-        raise HTTPForbidden(_("access_during_ongoing_not_allowed",
-                              default="During ongoing polls, this action isn't allowed. "
-                                      "Try again when polls have closed."))
 
 
 class VoteGroupsView(BaseView, VoteGroupEditMixin):
@@ -90,7 +83,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     def release_standin(self):
         """ Release stand-in
         """
-        _block_during_ongoing_poll(self.request)
+        self._block_during_ongoing_poll()
         group_name = self.request.GET.get('vote_group')
         try:
             group = self.vote_groups[group_name]
@@ -113,7 +106,7 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         permission=security.MODERATE_MEETING,
         renderer='json')
     def save_roles(self):
-        _block_during_ongoing_poll(self.request)
+        self._block_during_ongoing_poll()
         # TODO Load Schema(?), validate and save.
         group = self.group
         message = None
@@ -156,8 +149,8 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(EditVoteGroupForm, self).__init__(context, request)
-        #OK to allow edit during polls since this view is only allowed for moderators
-        if _count_ongoing_poll(self.request):
+        # OK to allow edit during polls since this view is only allowed for moderators
+        if self.vote_groups.ongoing_poll:
             self.flash_messages.add(_polls_ongoing_msg, type='danger')
 
     def appstruct(self):
@@ -189,7 +182,7 @@ class DeleteVoteGroupForm(DefaultDeleteForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(DeleteVoteGroupForm, self).__init__(context, request)
-        _block_during_ongoing_poll(self.request)
+        self._block_during_ongoing_poll()
         if not request.is_moderator:
             raise HTTPForbidden(_("You do not have authorization to delete groups."))
 
@@ -243,7 +236,7 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
-        _block_during_ongoing_poll(self.request)
+        self._block_during_ongoing_poll()
         if not self.allowed:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
 
@@ -275,7 +268,7 @@ class ApplyQRPermissionsForm(BaseForm, VoteGroupMixin):
         if IPresenceQR is None:
             self.flash_messages.add(_("voteit.qr not installed"), type='danger')
             raise HTTPFound(location=self.request.resource_url(self.context))
-        if _count_ongoing_poll(self.request):
+        if self.vote_groups.ongoing_poll:
             #OK for admins to override here
             self.flash_messages.add(_polls_ongoing_msg, type='danger')
         return super(ApplyQRPermissionsForm, self).__call__()
