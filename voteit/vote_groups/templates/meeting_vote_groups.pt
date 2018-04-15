@@ -8,7 +8,7 @@
   <div metal:fill-slot="main-content">
   <h2 i18n:translate="">Vote groups</h2>
 
-  <p tal:condition="ongoing_polls">
+  <p tal:condition="vote_groups.ongoing_poll">
       <span class="glyphicon glyphicon-info-sign"></span>
       <tal:ts i18n:translate="ongoing_polls_notice">
           There are ongoing polls so groups can't be changed right now.
@@ -99,12 +99,12 @@
 
       <div class="btn-group hidden-print" role="group"
           tal:condition="request.is_moderator">
-          <a class="btn btn-default ${ongoing_polls and 'disabled' or None}"
+          <a class="btn btn-default ${vote_groups.ongoing_poll and 'disabled' or None}"
              href="${request.resource_url(context, 'edit_vote_group', query = {'vote_group': vote_group.name})}"
              i18n:translate="">
               Edit
           </a>
-          <button class="btn btn-default ${ongoing_polls and 'disabled' or None}"
+          <button class="btn btn-default ${vote_groups.ongoing_poll and 'disabled' or None}"
              data-edit-roles
              i18n:translate="">
               Change roles
@@ -115,7 +115,7 @@
              i18n:translate="">
               Save roles
           </button>
-          <a class="btn btn-default ${ongoing_polls and 'disabled' or None}"
+          <a class="btn btn-default ${vote_groups.ongoing_poll and 'disabled' or None}"
              href="${request.resource_url(context, 'delete_vote_group', query = {'vote_group': vote_group.name})}"
              i18n:translate="">
               Delete
@@ -158,7 +158,7 @@
             <td tal:define="(votes_for_user, votes_for_group) vote_groups.get_primary_for(userid);
                             voting_group vote_groups.get_voting_group_for(userid);
                             has_substitute userid in vote_group.assignments;">
-              <tal:actions tal:condition="not ongoing_polls and (request.is_moderator or request.authenticated_userid == userid)">
+              <tal:actions tal:condition="not vote_groups.ongoing_poll and (request.is_moderator or request.authenticated_userid == userid)">
                   <tal:if condition="vote_group[userid] == 'primary'">
                       <a tal:condition="not has_substitute and has_standins"
                          class="btn btn-default btn-sm pull-right"

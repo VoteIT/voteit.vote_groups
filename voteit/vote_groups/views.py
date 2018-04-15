@@ -48,7 +48,6 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
             'role_choices': dict(VOTE_GROUP_ROLES),
             'has_qr': IPresenceQR is not None,
             'show_all': show_all,
-            'ongoing_polls': bool(_count_ongoing_poll(self.request)),
         }
         return response
 
