@@ -224,7 +224,7 @@ class VoteGroupTests(TestCase):
                 'two',
             ],
             'potential_members': 'support@voteit.se',
-        })
+        }, testing.DummyRequest())
         self.assertEqual(group.title, 'Monty')
         self.assertEqual(group.description, 'python3')
         self.assertEqual(group.keys, {'zero', 'one', 'two'})

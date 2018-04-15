@@ -287,7 +287,7 @@ class VoteGroup(Persistent, IterableUserDict):
                     members=list(self.keys()),
                     potential_members="\n".join(self.potential_members))
 
-    def update_from_appstruct(self, appstruct):
+    def update_from_appstruct(self, appstruct, request):
         # type: (dict) -> None
         self.title = appstruct['title']
         self.description = appstruct['description']
@@ -298,7 +298,7 @@ class VoteGroup(Persistent, IterableUserDict):
         found = 0
         for email in appstruct['potential_members'].splitlines():
             # FIXME: VoteGroup has no request object!
-            user = self.request.root['users'].get_user_by_email(email, only_validated=True)
+            user = request.root['users'].get_user_by_email(email, only_validated=True)
             if user:
                 incoming.add(user.userid)
                 found += 1
