@@ -113,6 +113,7 @@ class VoteGroups(object, IterableUserDict):
             try:
                 user = root['users'][userid]
             except KeyError:
+                print (userid)
                 continue
             if user.email:
                 if validated and not user.email_validated:

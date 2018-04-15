@@ -5,10 +5,9 @@ from unittest import TestCase
 from BTrees.OOBTree import OOBTree
 from pyramid import testing
 from pyramid.request import apply_request_extensions
-from pyramid.traversal import find_root
 from voteit.vote_groups.exceptions import GroupPermissionsException
 
-from voteit.core.models.interfaces import IMeeting, IUser, IUsers
+from voteit.core.models.interfaces import IMeeting
 from voteit.core.testing_helpers import bootstrap_and_fixture
 from zope.interface.verify import verifyClass
 from zope.interface.verify import verifyObject
@@ -33,9 +32,7 @@ class VoteGroupsTests(TestCase):
         from voteit.vote_groups.models import VoteGroups
         return VoteGroups
 
-    def _mk_one(self):
-        from voteit.core.models.meeting import Meeting
-        groups = self._cut(Meeting(), testing.DummyRequest())
+    def _initial_groups(self, groups):
         name = groups.new()
         group = groups[name]
         group['one'] = ROLE_STANDIN
@@ -45,6 +42,11 @@ class VoteGroupsTests(TestCase):
         name = groups.new()
         group = groups[name]
         group['three'] = ROLE_PRIMARY
+
+    def _mk_one(self):
+        from voteit.core.models.meeting import Meeting
+        groups = self._cut(Meeting(), testing.DummyRequest())
+        self._initial_groups(groups)
         return groups
 
     def test_verify_class(self):
@@ -138,11 +140,24 @@ class VoteGroupsTests(TestCase):
         self.assertEqual(events[1].group, group)
 
     def test_get_emails(self):
-        # FIXME Test getting from userids also (need root['users'][userid])
-        groups = self._mk_one()
+        from arche.resources import User
+        from voteit.core.models.meeting import Meeting
+        from voteit.vote_groups.models import VoteGroups
+        self.config.include('arche.testing')
+        self.config.include('voteit.core.testing_helpers.register_catalog')
+        root = bootstrap_and_fixture(self.config)
+        request = testing.DummyRequest()
+        apply_request_extensions(request)
+        request.root = root
+        self.config.begin(request)
+        root['m'] = m = Meeting()
+        root['users']['one'] = User(email='hello@world.org', email_validated=True)
+
+        groups = VoteGroups(m, request)
+        self._initial_groups(groups)
         group = groups.values()[0]
         group.potential_members.add('support@voteit.se')
-        self.assertEqual(groups.get_emails(), {'support@voteit.se'})
+        self.assertEqual(groups.get_emails(), {'support@voteit.se', 'hello@world.org'})
 
     def test_traversal(self):
         groups = self._mk_one()
@@ -214,6 +229,16 @@ class VoteGroupTests(TestCase):
         self.assertEqual(appstruct['potential_members'].split('\n'), ['support@voteit.se', 'test@example.com'])
 
     def test_from_appstruct(self):
+        from voteit.core.models.meeting import Meeting
+        self.config.include('arche.testing')
+        self.config.include('voteit.core.testing_helpers.register_catalog')
+        root = bootstrap_and_fixture(self.config)
+        request = testing.DummyRequest()
+        apply_request_extensions(request)
+        request.root = root
+        self.config.begin(request)
+        root['m'] = Meeting()
+
         group = self._mk_one()
         group.update_from_appstruct({
             'title': 'Monty',
@@ -224,11 +249,11 @@ class VoteGroupTests(TestCase):
                 'two',
             ],
             'potential_members': 'support@voteit.se',
-        }, testing.DummyRequest())
+        }, request)
         self.assertEqual(group.title, 'Monty')
         self.assertEqual(group.description, 'python3')
-        self.assertEqual(group.keys, {'zero', 'one', 'two'})
-        self.assertEqual(group.potential_members, 'support@voteit.se')
+        self.assertEqual(set(group.keys()), {'zero', 'one', 'two'})
+        self.assertEqual(set(group.potential_members), {'support@voteit.se'})
 
 
 class UserValidatedEmailIntegrationTests(TestCase):
