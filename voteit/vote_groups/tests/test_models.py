@@ -157,6 +157,7 @@ class VoteGroupsTests(TestCase):
         self._initial_groups(groups)
         group = groups.values()[0]
         group.potential_members.add('support@voteit.se')
+
         self.assertEqual(groups.get_emails(), {'support@voteit.se', 'hello@world.org'})
 
     def test_traversal(self):
