@@ -54,13 +54,19 @@ class IVoteGroups(IDict):
         """ Check if user is available as substitute in group """
 
     def can_assign(userid, group):
-        """ Check if user can assign it's vote in group """
+        """ Check if users vote in group can be assigned """
+
+    def get_assign_permission(userid, group):
+        """ Check if current user can change assignment of this vote in group """
 
     def can_set_role(userid, role, group):
         """ Check if user can have a certains role """
 
     def assign_vote(from_userid, to_userid, group):
         """ Assign vote from/to user in group. Fire event when assigned. """
+
+    def release_substitute(voter, group):
+        """ Release substitute voter in group. Fire event when released. """
 
     def set_role(userid, role, group, request=None):
         """ Set role for user in group. Fire event when role is set. """
@@ -88,6 +94,9 @@ class IVoteGroup(IDict):
 
     def get_primary_for(userid):
         """ Who made this userid a voter? """
+
+    def get_substitute_for(userid):
+        """ Return substitute for this user, or None. """
 
 
 class IAssignmentChanged(Interface):

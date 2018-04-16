@@ -14,7 +14,6 @@ from pyramid.interfaces import IRequest
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import find_interface
 from pyramid.traversal import find_root
-from pyramid.traversal import resource_path
 from repoze.catalog.query import Any, Eq
 from six import string_types
 from typing import Iterable
@@ -39,18 +38,18 @@ from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
 class VoteGroups(object, IterableUserDict):
     """ See .interfaces.IVoteGroups """
 
-    def __init__(self, context, request=None):
+    def __init__(self, context, request):
         self.context = context
-        self.request = request or get_current_request()
+        self.request = request
 
-    @property
-    def ongoing_poll(self):
-        # type: () -> bool
-        _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
-        query = _poll_query & Eq('path', resource_path(self.context))
-        if self.request.root is not None:  # pragma: no cover
-            return self.request.root.catalog.query(query)[0].total > 0
-        return False
+    # @property
+    # def ongoing_poll(self):
+    #     # type: () -> bool
+    #     _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
+    #     query = _poll_query & Eq('path', resource_path(self.context))
+    #     if self.request.root is not None:  # pragma: no cover
+    #         return self.request.root.catalog.query(query)[0].total > 0
+    #     return False
 
     @reify
     def data(self):
@@ -104,7 +103,7 @@ class VoteGroups(object, IterableUserDict):
         emails = set()
         userids = set()
         for group in self.values():
-            if group.name not in group_names:
+            if group.name not in group_names:  # pragma: no cover
                 continue
             if potential:
                 emails.update(group.potential_members)
@@ -113,10 +112,9 @@ class VoteGroups(object, IterableUserDict):
             try:
                 user = root['users'][userid]
             except KeyError:
-                print (userid)
                 continue
             if user.email:
-                if validated and not user.email_validated:
+                if validated and not user.email_validated:  # pragma: no cover
                     continue
                 emails.add(user.email)
         return emails
@@ -197,24 +195,35 @@ class VoteGroups(object, IterableUserDict):
 
     def can_assign(self, userid, group):
         # type: (string_types, IVoteGroup) -> bool
-        return bool(not self.ongoing_poll and
-                    userid in group.primaries and
+        return bool(userid in group.primaries and
                     userid not in group.assignments and
                     self.get_free_standins(group))
 
     def can_set_role(self, userid, role, group):
         # type: (string_types, IVoteGroup) -> bool
         assert role in dict(VOTE_GROUP_ROLES), 'Role does not exist'
-        if self.ongoing_poll:
-            return False
         if role == ROLE_PRIMARY and userid in self.get_primaries(exclude_group=group):
             return False
         return userid in group
+
+    def get_assign_permission(self, userid, group):
+        # type: (string_types, VoteGroup) -> bool
+        if self.request.is_moderator or self.request.authenticated_userid == userid:
+            return bool(group.get(userid) == ROLE_PRIMARY or group.get_primary_for(userid))
+        return False
 
     def assign_vote(self, from_userid, to_userid, group, event=True):
         if not self.can_assign(from_userid, group) or not self.can_substitute(to_userid, group):
             raise GroupPermissionsException('Cannot assign vote')
         group.assignments[from_userid] = to_userid
+        if event:
+            self.notify_changed(group)
+
+    def release_substitute(self, voter, group, event=True):
+        if not self.get_assign_permission(voter, group):
+            raise GroupPermissionsException('Cannot assign vote')
+        primary = group.get_primary_for(voter)
+        del group.assignments[primary]
         if event:
             self.notify_changed(group)
 
@@ -225,6 +234,11 @@ class VoteGroups(object, IterableUserDict):
         group[userid] = role
         if event:
             self.notify_changed(group)
+
+    def update_from_appstruct(self, appstruct, group):
+        # type: (dict, VoteGroup) -> None
+        group.update_from_appstruct(appstruct, self.request)
+        self.notify_changed(group)
 
     def notify_changed(self, group):
         event = AssignmentChanged(group, self.request)
@@ -246,11 +260,11 @@ class VoteGroup(Persistent, IterableUserDict):
         self.name = name
         self.title = title
         self.description = description
-        #Use userid as key and role as value, or none
+        # Use userid as key and role as value, or none
         self.data = OOBTree()
-        #Assigned
+        # Assigned
         self.assignments = OOBTree()
-        #Potential members - simply list emails
+        # Potential members - simply list emails
         self.potential_members = OOSet()
 
     def get_roles(self, role):
@@ -276,10 +290,16 @@ class VoteGroup(Persistent, IterableUserDict):
         )
 
     def get_primary_for(self, userid):
+        # type: (string_types) -> string_types
         assert isinstance(userid, string_types)
         for k, v in self.assignments.items():
             if v == userid:
                 return k
+
+    def get_substitute_for(self, userid):
+        # type: (string_types) -> string_types
+        assert isinstance(userid, string_types)
+        return self.assignments.get(userid)
 
     def appstruct(self):
         # type: () -> dict
@@ -289,7 +309,7 @@ class VoteGroup(Persistent, IterableUserDict):
                     potential_members="\n".join(self.potential_members))
 
     def update_from_appstruct(self, appstruct, request):
-        # type: (dict) -> None
+        # type: (dict, IRequest) -> None
         self.title = appstruct['title']
         self.description = appstruct['description']
         previous = set(self.keys())
@@ -298,7 +318,6 @@ class VoteGroup(Persistent, IterableUserDict):
         potential_members = set()
         found = 0
         for email in appstruct['potential_members'].splitlines():
-            # FIXME: VoteGroup has no request object!
             user = request.root['users'].get_user_by_email(email, only_validated=True)
             if user:
                 incoming.add(user.userid)
@@ -327,10 +346,10 @@ def apply_adjust_meeting_roles(meeting, group=None, request=None):
     if request is None:
         request = get_current_request()
     vote_groups = request.registry.queryMultiAdapter((meeting, request), IVoteGroups)
-    if vote_groups is None:
+    if vote_groups is None:  # pragma: no cover
         return
     assigned_voter_roles = vote_groups.settings.get('assigned_voter_roles', None)
-    if not assigned_voter_roles:
+    if not assigned_voter_roles:  # pragma: no cover
         # System is inactive
         return
     inactive_voter_roles = vote_groups.settings.get('inactive_voter_roles', set())
@@ -339,7 +358,7 @@ def apply_adjust_meeting_roles(meeting, group=None, request=None):
         # Only for a specific group
         assigned_voter_members = group.get_voters()
         members = set(group.keys())
-    else:
+    else:  # pragma: no cover
         # Check all
         assigned_voter_members = vote_groups.get_voters()
         members = vote_groups.get_members()

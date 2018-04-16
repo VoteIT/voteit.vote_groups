@@ -10,7 +10,11 @@ from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPForbidden
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPNotFound
+from pyramid.traversal import resource_path
 from pyramid.view import view_config
+from repoze.catalog.query import Eq
+from voteit.vote_groups.exceptions import GroupPermissionsException
+
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
 from voteit.core.security import ROLE_VOTER
@@ -82,20 +86,19 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     def release_standin(self):
         """ Release stand-in
         """
-        self._block_during_ongoing_poll()
+        # self._block_during_ongoing_poll()
         group_name = self.request.GET.get('vote_group')
         try:
             group = self.vote_groups[group_name]
         except KeyError:
             raise HTTPNotFound("No such group")
-        primary = self.request.GET.get('primary')
-        if not any((
-            self.request.is_moderator,
-            self.request.authenticated_userid == primary,
-            self.request.authenticated_userid == self.group.assignments.get(primary),
-        )):
+        voter = self.request.GET.get('voter')
+
+        try:
+            self.vote_groups.release_substitute(voter, group)
+        except GroupPermissionsException:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
-        del group.assignments[primary]
+
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
@@ -105,11 +108,10 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         permission=security.MODERATE_MEETING,
         renderer='json')
     def save_roles(self):
-        self._block_during_ongoing_poll()
+        # self._block_during_ongoing_poll()
         # TODO Load Schema(?), validate and save.
         group = self.group
         message = None
-        valid_roles = [r[0] for r in VOTE_GROUP_ROLES]
         changed = set()
         for userid, role in self.request.POST.items():
             if userid in group and group[userid] != role:
@@ -131,9 +133,12 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
                 'error_message': self.request.localizer.translate(message),
             }
         for userid in changed:
-            if role in valid_roles:
-                group[userid] = self.request.POST[userid]
-        return {'status': 'success', 'changed_roles': len(changed)}
+            role = self.request.POST[userid]
+            self.vote_groups.set_role(userid, role, group)
+        return {
+            'status': 'success',
+            'changed_roles': len(changed)
+        }
 
 
 @view_config(name="edit_vote_group",
@@ -149,14 +154,14 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
     def __init__(self, context, request):
         super(EditVoteGroupForm, self).__init__(context, request)
         # OK to allow edit during polls since this view is only allowed for moderators
-        if self.vote_groups.ongoing_poll:
-            self.flash_messages.add(_polls_ongoing_msg, type='danger')
+        # if self.vote_groups.ongoing_poll:
+        #     self.flash_messages.add(_polls_ongoing_msg, type='danger')
 
     def appstruct(self):
         return self.group.appstruct()
 
     def save_success(self, appstruct):
-        self.group.update_from_appstruct(appstruct, self.request)
+        self.vote_groups.update_from_appstruct(appstruct, self.group)
         self.flash_messages.add(self.default_success)
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
@@ -181,7 +186,7 @@ class DeleteVoteGroupForm(DefaultDeleteForm, VoteGroupEditMixin):
 
     def __init__(self, context, request):
         super(DeleteVoteGroupForm, self).__init__(context, request)
-        self._block_during_ongoing_poll()
+        # self._block_during_ongoing_poll()
         if not request.is_moderator:
             raise HTTPForbidden(_("You do not have authorization to delete groups."))
 
@@ -228,14 +233,15 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
 
     @reify
     def allowed(self):
-        userid = self.request.authenticated_userid
-        return self.request.is_moderator or (userid and userid == self.for_user) and \
-               userid not in self.group.assignments and \
-               userid in self.group.primaries
+        return self.vote_groups.get_assign_permission(self.for_user, self.group)
+        # userid = self.request.authenticated_userid
+        # return self.request.is_moderator or (userid and userid == self.for_user) and \
+        #        userid not in self.group.assignments and \
+        #        userid in self.group.primaries
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
-        self._block_during_ongoing_poll()
+        # self._block_during_ongoing_poll()
         if not self.allowed:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
 
@@ -244,7 +250,10 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
         {}
 
     def save_success(self, appstruct):
-        self.group.assignments[self.for_user] = appstruct['standin']
+        try:
+            self.vote_groups.assign_vote(self.for_user, appstruct['standin'], self.group)
+        except GroupPermissionsException:
+            raise HTTPForbidden(_("You do not have authorization to change voter rights."))
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
@@ -267,10 +276,17 @@ class ApplyQRPermissionsForm(BaseForm, VoteGroupMixin):
         if IPresenceQR is None:
             self.flash_messages.add(_("voteit.qr not installed"), type='danger')
             raise HTTPFound(location=self.request.resource_url(self.context))
-        if self.vote_groups.ongoing_poll:
-            #OK for admins to override here
+        if self.ongoing_poll:
+            # OK for admins to override here
             self.flash_messages.add(_polls_ongoing_msg, type='danger')
         return super(ApplyQRPermissionsForm, self).__call__()
+
+    @property
+    def ongoing_poll(self):
+        # type: () -> bool
+        _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
+        query = _poll_query & Eq('path', resource_path(self.context))
+        return self.request.root.catalog.query(query)[0].total > 0
 
     def update_electoral_register(self):
         if IElectoralRegister is None:

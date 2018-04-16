@@ -55,6 +55,15 @@ class VoteGroupsTests(TestCase):
     def test_verify_obj(self):
         self.assertTrue(verifyObject(IVoteGroups, self._mk_one()))
 
+    def test_copy_from_meeting(self):
+        from voteit.core.models.meeting import Meeting
+        self.config.registry.registerAdapter(self._cut)
+        old_groups = self._mk_one()
+        new_groups = self._cut(Meeting(), testing.DummyRequest())
+        self.assertIsInstance(old_groups.context, Meeting)
+        new_groups.copy_from_meeting(old_groups.context)
+        self.assertEqual(len(new_groups), 2)
+
     def test_standins(self):
         groups = self._mk_one()
         self.assertEqual(groups.get_standin_for('two'), 'one')
@@ -123,6 +132,46 @@ class VoteGroupsTests(TestCase):
         with self.assertRaises(GroupPermissionsException):
             groups.set_role('two', ROLE_PRIMARY, group)
 
+    def test_assign_permission(self):
+        groups = self._mk_one()
+        self.config.testing_securitypolicy(
+            userid='one', permissive=True
+        )
+        group = filter(lambda g: len(g) == 3, groups.values())[0]
+        groups.request.is_moderator = False
+
+        self.assertTrue(groups.get_assign_permission('one', group))
+        self.assertFalse(groups.get_assign_permission('two', group))
+        self.assertFalse(groups.get_assign_permission('three', group))
+
+        self.config.testing_securitypolicy(
+            userid='two', permissive=True
+        )
+        self.assertFalse(groups.get_assign_permission('one', group))
+        self.assertTrue(groups.get_assign_permission('two', group))
+        self.assertFalse(groups.get_assign_permission('three', group))
+
+        groups.request.is_moderator = True
+        self.assertTrue(groups.get_assign_permission('one', group))
+        self.assertFalse(groups.get_assign_permission('three', group))
+
+    def test_release_substitute(self):
+        events = []
+
+        def subscriber(event):
+            events.append(event)
+        self.config.add_subscriber(subscriber, IAssignmentChanged)
+
+        groups = self._mk_one()
+        groups.request.is_moderator = True
+        group = filter(lambda g: len(g) == 3, groups.values())[0]
+
+        self.assertIs(groups.release_substitute('one', group), None)
+        self.assertEqual(len(events), 2)
+        with self.assertRaises(GroupPermissionsException):
+            groups.release_substitute('one', group)
+        self.assertEqual(len(events), 2)
+
     def test_set_role_event(self):
         events = []
 
@@ -176,6 +225,45 @@ class VoteGroupsTests(TestCase):
         groups = self._mk_one()
         self.assertIn('<voteit.vote_groups.models.VoteGroups adapter', repr(groups))
 
+    def test_from_appstruct(self):
+        from arche.resources import User
+        from voteit.core.models.meeting import Meeting
+        from voteit.core import security
+        from voteit.vote_groups.models import VoteGroups
+        from voteit.vote_groups.models import adjust_roles_after_assignment
+        self.config.add_subscriber(adjust_roles_after_assignment, IAssignmentChanged)
+        self.config.registry.registerAdapter(VoteGroups)
+        self.config.include('arche.testing')
+        self.config.include('voteit.core.testing_helpers.register_catalog')
+        root = bootstrap_and_fixture(self.config)
+        request = testing.DummyRequest()
+        apply_request_extensions(request)
+        request.root = root
+        self.config.begin(request)
+        root['m'] = m = Meeting()
+        root['users']['one'] = User(email='hello@world.org', email_validated=True)
+
+        groups = VoteGroups(m, request)
+        groups.settings = {
+            'assigned_voter_roles': {security.VIEW, security.ADD_PROPOSAL},
+            'inactive_voter_roles': {security.VIEW},
+        }
+        self._initial_groups(groups)
+        group = filter(lambda g: len(g) == 3, groups.values())[0]
+        groups.update_from_appstruct({
+            'title': 'Monty',
+            'description': 'python3',
+            'members': [
+                'zero',
+                'two',
+            ],
+            'potential_members': 'support@voteit.se\nhello@world.org',
+        }, group)
+        self.assertEqual(group.title, 'Monty')
+        self.assertEqual(group.description, 'python3')
+        self.assertEqual(set(group.keys()), {'zero', 'one', 'two'})
+        self.assertEqual(set(group.potential_members), {'support@voteit.se'})
+
 
 class VoteGroupTests(TestCase):
 
@@ -221,6 +309,8 @@ class VoteGroupTests(TestCase):
         self.assertEqual(group.get_voters(), {'one'})
         self.assertEqual(group.get_primary_for('one'), 'two')
         self.assertIs(group.get_primary_for('two'), None)
+        self.assertEqual(group.get_substitute_for('two'), 'one')
+        self.assertIs(group.get_substitute_for('one'), None)
 
     def test_appstruct(self):
         group = self._mk_one()
@@ -228,33 +318,6 @@ class VoteGroupTests(TestCase):
         self.assertIsInstance(appstruct, dict)
         self.assertEqual(len(appstruct['members']), 3)
         self.assertEqual(appstruct['potential_members'].split('\n'), ['support@voteit.se', 'test@example.com'])
-
-    def test_from_appstruct(self):
-        from voteit.core.models.meeting import Meeting
-        self.config.include('arche.testing')
-        self.config.include('voteit.core.testing_helpers.register_catalog')
-        root = bootstrap_and_fixture(self.config)
-        request = testing.DummyRequest()
-        apply_request_extensions(request)
-        request.root = root
-        self.config.begin(request)
-        root['m'] = Meeting()
-
-        group = self._mk_one()
-        group.update_from_appstruct({
-            'title': 'Monty',
-            'description': 'python3',
-            'members': [
-                'zero',
-                'one',
-                'two',
-            ],
-            'potential_members': 'support@voteit.se',
-        }, request)
-        self.assertEqual(group.title, 'Monty')
-        self.assertEqual(group.description, 'python3')
-        self.assertEqual(set(group.keys()), {'zero', 'one', 'two'})
-        self.assertEqual(set(group.potential_members), {'support@voteit.se'})
 
 
 class UserValidatedEmailIntegrationTests(TestCase):

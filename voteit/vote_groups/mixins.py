@@ -15,11 +15,11 @@ class VoteGroupMixin(object):
     def vote_groups(self):
         return self.request.registry.getMultiAdapter((self.request.meeting, self.request), IVoteGroups)
 
-    def _block_during_ongoing_poll(self):
-        if self.vote_groups.ongoing_poll:
-            raise HTTPForbidden(_("access_during_ongoing_not_allowed",
-                                  default="During ongoing polls, this action isn't allowed. "
-                                          "Try again when polls have closed."))
+    # def _block_during_ongoing_poll(self):
+    #     if self.vote_groups.ongoing_poll:
+    #         raise HTTPForbidden(_("access_during_ongoing_not_allowed",
+    #                               default="During ongoing polls, this action isn't allowed. "
+    #                                       "Try again when polls have closed."))
 
 
 class VoteGroupEditMixin(VoteGroupMixin):
