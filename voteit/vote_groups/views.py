@@ -13,7 +13,6 @@ from pyramid.httpexceptions import HTTPNotFound
 from pyramid.traversal import resource_path
 from pyramid.view import view_config
 from repoze.catalog.query import Eq
-from voteit.vote_groups.exceptions import GroupPermissionsException
 
 from voteit.core import security
 from voteit.core.models.interfaces import IMeeting
@@ -30,10 +29,12 @@ except ImportError:
     IElectoralRegister = None
 
 from voteit.vote_groups import _
+from voteit.vote_groups.exceptions import GroupPermissionsException
 from voteit.vote_groups.fanstaticlib import vote_groups_all
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import VOTE_GROUP_ROLES
-from voteit.vote_groups.mixins import VoteGroupEditMixin, VoteGroupMixin
+from voteit.vote_groups.mixins import VoteGroupEditMixin
+from voteit.vote_groups.mixins import VoteGroupMixin
 from voteit.vote_groups.models import apply_adjust_meeting_roles
 
 
@@ -86,7 +87,6 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
     def release_standin(self):
         """ Release stand-in
         """
-        # self._block_during_ongoing_poll()
         group_name = self.request.GET.get('vote_group')
         try:
             group = self.vote_groups[group_name]
@@ -108,7 +108,6 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         permission=security.MODERATE_MEETING,
         renderer='json')
     def save_roles(self):
-        # self._block_during_ongoing_poll()
         # TODO Load Schema(?), validate and save.
         group = self.group
         message = None
@@ -153,12 +152,6 @@ class EditVoteGroupForm(DefaultEditForm, VoteGroupEditMixin):
     title = _("Edit vote group")
     type_name = 'VoteGroup'
 
-    def __init__(self, context, request):
-        super(EditVoteGroupForm, self).__init__(context, request)
-        # OK to allow edit during polls since this view is only allowed for moderators
-        # if self.vote_groups.ongoing_poll:
-        #     self.flash_messages.add(_polls_ongoing_msg, type='danger')
-
     def appstruct(self):
         return self.group.appstruct()
 
@@ -185,12 +178,6 @@ class DeleteVoteGroupForm(DefaultDeleteForm, VoteGroupEditMixin):
         return _("really_delete_vote_group_warning",
                  default="Really delete vote group '${vote_group_title}'? This can't be undone",
                  mapping={'vote_group_title': self.vote_groups[self.group_name].title})
-
-    def __init__(self, context, request):
-        super(DeleteVoteGroupForm, self).__init__(context, request)
-        # self._block_during_ongoing_poll()
-        if not request.is_moderator:
-            raise HTTPForbidden(_("You do not have authorization to delete groups."))
 
     def delete_success(self, appstruct):
         msg = _("Deleted '${title}'",
@@ -236,20 +223,15 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
     @reify
     def allowed(self):
         return self.vote_groups.get_assign_permission(self.for_user, self.group)
-        # userid = self.request.authenticated_userid
-        # return self.request.is_moderator or (userid and userid == self.for_user) and \
-        #        userid not in self.group.assignments and \
-        #        userid in self.group.primaries
 
     def __init__(self, context, request):
         super(AssignVoteForm, self).__init__(context, request)
-        # self._block_during_ongoing_poll()
         if not self.allowed:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
 
     def appstruct(self):
         #Not used since you only assign new
-        {}
+        return {}
 
     def save_success(self, appstruct):
         try:

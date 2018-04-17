@@ -5,10 +5,10 @@ from UserDict import IterableUserDict
 from persistent import Persistent
 from uuid import uuid4
 
-from arche.interfaces import IEmailValidatedEvent
-from arche.interfaces import IUser
 from BTrees.OOBTree import OOBTree
 from BTrees.OOBTree import OOSet
+from arche.interfaces import IEmailValidatedEvent
+from arche.interfaces import IUser
 from pyramid.decorator import reify
 from pyramid.interfaces import IRequest
 from pyramid.threadlocal import get_current_request
@@ -17,7 +17,6 @@ from pyramid.traversal import find_root
 from repoze.catalog.query import Any, Eq
 from six import string_types
 from typing import Iterable
-
 from voteit.core.models.interfaces import IMeeting
 from zope.component import adapter
 from zope.copy import copy
@@ -41,15 +40,6 @@ class VoteGroups(object, IterableUserDict):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-
-    # @property
-    # def ongoing_poll(self):
-    #     # type: () -> bool
-    #     _poll_query = Eq('type_name', 'Poll') & Eq('workflow_state', 'ongoing')
-    #     query = _poll_query & Eq('path', resource_path(self.context))
-    #     if self.request.root is not None:  # pragma: no cover
-    #         return self.request.root.catalog.query(query)[0].total > 0
-    #     return False
 
     @reify
     def data(self):

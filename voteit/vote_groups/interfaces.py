@@ -101,3 +101,4 @@ class IVoteGroup(IDict):
 
 class IAssignmentChanged(Interface):
     group = Attribute("Vote group with chenges")
+    request = Attribute("Current request")

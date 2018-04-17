@@ -13,4 +13,3 @@ class AssignmentChanged(object):
     def __init__(self, group, request):
         self.group = group
         self.request = request
-

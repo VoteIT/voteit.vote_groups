@@ -11,7 +11,3 @@ vote_groups_css = Resource(vote_groups_lib, 'css/vote_groups.css')
 vote_groups_js = Resource(vote_groups_lib, 'scripts/vote_groups.js', depends=(jquery,))
 
 vote_groups_all = Group((vote_groups_css, vote_groups_js))
-
-
-def includeme(config):
-    pass

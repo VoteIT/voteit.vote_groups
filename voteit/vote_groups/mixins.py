@@ -3,12 +3,10 @@ from __future__ import unicode_literals
 
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPNotFound
-from pyramid.httpexceptions import HTTPForbidden
 from six import string_types
 
 from voteit.vote_groups.interfaces import IVoteGroups
 from voteit.vote_groups.interfaces import IVoteGroup
-from voteit.vote_groups import _
 
 
 class VoteGroupMixin(object):
@@ -17,12 +15,6 @@ class VoteGroupMixin(object):
     def vote_groups(self):
         # type: () -> IVoteGroups
         return self.request.registry.getMultiAdapter((self.request.meeting, self.request), IVoteGroups)
-
-    # def _block_during_ongoing_poll(self):
-    #     if self.vote_groups.ongoing_poll:
-    #         raise HTTPForbidden(_("access_during_ongoing_not_allowed",
-    #                               default="During ongoing polls, this action isn't allowed. "
-    #                                       "Try again when polls have closed."))
 
 
 class VoteGroupEditMixin(VoteGroupMixin):
