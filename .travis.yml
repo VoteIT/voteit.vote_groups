@@ -13,4 +13,4 @@ install:
   - travis_retry buildout
 
 script:
-  - travis_retry py setup.py test -q
+  - travis_retry bin/py setup.py test -q
