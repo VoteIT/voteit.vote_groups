@@ -11,4 +11,5 @@ def includeme(config):
     config.include('.views')
     config.include('.models')
     config.include('.schemas')
+    config.include('.evolve')
     config.add_translation_dirs('voteit.vote_groups:locale/')
