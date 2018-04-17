@@ -132,9 +132,11 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
                 'status': 'failed',
                 'error_message': self.request.localizer.translate(message),
             }
-        for userid in changed:
-            role = self.request.POST[userid]
-            self.vote_groups.set_role(userid, role, group)
+        if changed:
+            for userid in changed:
+                role = self.request.POST[userid]
+                self.vote_groups.set_role(userid, role, group, event=False)
+            self.vote_groups.notify_changed(group)
         return {
             'status': 'success',
             'changed_roles': len(changed)
