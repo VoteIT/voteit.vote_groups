@@ -388,6 +388,6 @@ def includeme(config):
         from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
         has_irl = True
     except ImportError:  # pragma: no cover
-        has_irl = True
+        has_irl = False
     if has_irl:
         config.include('voteit.vote_groups.plugins.meeting_presence')
