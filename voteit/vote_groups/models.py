@@ -18,10 +18,13 @@ from repoze.catalog.query import Any, Eq
 from six import string_types
 from typing import Iterable
 from voteit.core.models.interfaces import IMeeting
+from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
+from voteit.irl.models.interfaces import IMeetingPresence
 from zope.component import adapter
 from zope.copy import copy
 from zope.interface import implementer
 
+from voteit.vote_groups import _
 from voteit.vote_groups.events import AssignmentChanged
 from voteit.vote_groups.exceptions import GroupPermissionsException
 from voteit.vote_groups.interfaces import IAssignmentChanged
@@ -323,6 +326,20 @@ class VoteGroup(Persistent, IterableUserDict):
             self.potential_members.update(potential_members)
 
 
+class PresentWithVoteGroupsVoters(ElegibleVotersMethod):
+    name = 'present_with_vote_groups'
+    title = _("Present with group voter rights.")
+    description = _("present_with_vote_groups_description",
+                    default="Will set voter rights for present user according to vote groups settings.")
+
+    def get_voters(self, request=None, **kw):
+        if request is None:
+            request = get_current_request()
+        meeting_presence = request.registry.getAdapter(self.context, IMeetingPresence)
+        groups = request.registry.getMultiAdapter((self.context, request), IVoteGroups)
+        return frozenset(groups.get_voters().intersection(meeting_presence.present_userids))
+
+
 def apply_adjust_meeting_roles(meeting, group=None, request=None):
     # type: (IMeeting, IVoteGroup, IRequest) -> None
     """
@@ -384,10 +401,4 @@ def includeme(config):
     config.registry.registerAdapter(VoteGroups)
     config.add_subscriber(user_validated_email_subscriber, IEmailValidatedEvent)
     config.add_subscriber(adjust_roles_after_assignment, IAssignmentChanged)
-    try:
-        from voteit.irl.models.elegible_voters_method import ElegibleVotersMethod
-        has_irl = True
-    except ImportError:  # pragma: no cover
-        has_irl = False
-    if has_irl:
-        config.include('voteit.vote_groups.plugins.meeting_presence')
+    config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)

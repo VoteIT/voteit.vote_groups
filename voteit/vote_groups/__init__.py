@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from pyramid.i18n import TranslationStringFactory
 
-
 _ = TranslationStringFactory('voteit.vote_groups')
 
 
