@@ -6,14 +6,15 @@ from pyramid.httpexceptions import HTTPNotFound
 from six import string_types
 
 from voteit.vote_groups.interfaces import IVoteGroups
-from voteit.vote_groups.interfaces import IVoteGroup
+from voteit.vote_groups.models import VoteGroups
+from voteit.vote_groups.models import VoteGroup
 
 
 class VoteGroupMixin(object):
 
     @reify
     def vote_groups(self):
-        # type: () -> IVoteGroups
+        # type: () -> VoteGroups
         return self.request.registry.getMultiAdapter((self.request.meeting, self.request), IVoteGroups)
 
 
@@ -29,7 +30,7 @@ class VoteGroupEditMixin(VoteGroupMixin):
 
     @reify
     def group(self):
-        # type: () -> IVoteGroup
+        # type: () -> VoteGroup
         try:
             return self.vote_groups[self.group_name]
         except KeyError:
