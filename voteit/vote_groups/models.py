@@ -60,8 +60,10 @@ class VoteGroups(object, IterableUserDict):
         if value != self.settings:
             self.context._vote_groups_settings = OOBTree(value)
 
-    def new(self):
-        name = unicode(uuid4())
+    def new(self, name=None):
+        # Name as kw to allow easier testing
+        if not name:
+            name = unicode(uuid4())
         self[name] = VoteGroup(name)
         return name
 
@@ -129,22 +131,22 @@ class VoteGroups(object, IterableUserDict):
         # TODO Cache this, but drop on any changes, even in individual groups.
 
     def get_primaries(self, exclude_group=None):
-        # type: (IVoteGroup) -> set[string_types]
+        # type: (VoteGroup) -> set[string_types]
         all_primaries = set()
         for group in filter(lambda g: g != exclude_group, self.values()):
             all_primaries.update(group.primaries)
         return all_primaries
 
     def sorted(self):
-        # type: () -> Iterable[IVoteGroup]
+        # type: () -> Iterable[VoteGroup]
         return sorted(self.values(), key=lambda g: g.title.lower())
 
     def vote_groups_for_user(self, userid):
-        # type: (string_types) -> Iterable[IVoteGroup]
+        # type: (string_types) -> Iterable[VoteGroup]
         return filter(lambda g: userid in g, self.sorted())
 
     def get_free_standins(self, group):
-        # type: (IVoteGroup) -> set[string_types]
+        # type: (VoteGroup) -> set[string_types]
         return set(group.standins).difference(self.voters)
 
     def __setitem__(self, key, vg):
@@ -154,13 +156,11 @@ class VoteGroups(object, IterableUserDict):
         self.data[key] = vg
 
     def __bool__(self):
-        # type: () -> bool
         """ This object should be "true" even if it has no content. """
         return True
     __nonzero__ = __bool__
 
     def email_validated(self, user):
-        # type: (IUser) -> None
         assert IUser.providedBy(user)
         if user.email:
             for group in self.values():
@@ -184,16 +184,20 @@ class VoteGroups(object, IterableUserDict):
 
     def can_substitute(self, userid, group):
         # type: (string_types, VoteGroup) -> bool
-        return userid in self.get_free_standins(group)
+        return userid in group and userid in self.get_free_standins(group)
 
     def can_assign(self, userid, group):
-        # type: (string_types, IVoteGroup) -> bool
-        return bool(userid in group.primaries and
+        # type: (string_types, VoteGroup) -> bool
+        return bool(userid in group and userid in group.primaries and
                     userid not in group.assignments and
                     self.get_free_standins(group))
 
+    def can_release(self, userid, group):
+        # type: (string_types, VoteGroup) -> bool
+        return userid in group and group.assignments.values()
+
     def can_set_role(self, userid, role, group):
-        # type: (string_types, IVoteGroup) -> bool
+        # type: (string_types, VoteGroup) -> bool
         assert role in dict(VOTE_GROUP_ROLES), 'Role does not exist'
         if role == ROLE_PRIMARY and userid in self.get_primaries(exclude_group=group):
             return False
@@ -213,9 +217,18 @@ class VoteGroups(object, IterableUserDict):
             self.notify_changed(group)
 
     def release_substitute(self, voter, group, event=True):
-        if not self.get_assign_permission(voter, group):
-            raise GroupPermissionsException('Cannot assign vote')
-        primary = group.get_primary_for(voter)
+        if voter in group.primaries:
+            primary = voter
+            if not self.get_assign_permission(primary, group):
+                raise GroupPermissionsException('Cannot release vote')
+        else:
+            primary = group.get_primary_for(voter)
+            if not primary:
+                raise GroupPermissionsException("Not a substitute")
+            if not self.can_release(voter, group):
+                raise GroupPermissionsException('Cannot release vote')
+        if not primary:
+            raise GroupPermissionsException('No vote to release')
         del group.assignments[primary]
         if event:
             self.notify_changed(group)

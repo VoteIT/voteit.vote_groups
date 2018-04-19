@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE 1.0\n"
-"POT-Creation-Date: 2018-04-15 16:29+0200\n"
+"POT-Creation-Date: 2018-04-19 12:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,8 +21,18 @@ msgid "Primary"
 msgstr ""
 
 #: ./voteit/vote_groups/interfaces.py:16 ./voteit/vote_groups/schemas.py:110
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:130
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:122
 msgid "Stand-in"
+msgstr ""
+
+#: ./voteit/vote_groups/models.py:344
+msgid "Present with group voter rights."
+msgstr ""
+
+#. Default: Will set voter rights for present user according to vote groups
+#. settings.
+#: ./voteit/vote_groups/models.py:345
+msgid "present_with_vote_groups_description"
 msgstr ""
 
 #: ./voteit/vote_groups/schemas.py:39
@@ -130,256 +140,246 @@ msgstr ""
 msgid "Apply now?"
 msgstr ""
 
-#. Default: During ongoing polls, this action isn't allowed. Try again when
-#. polls have closed.
-#: ./voteit/vote_groups/mixins.py:20
-msgid "access_during_ongoing_not_allowed"
-msgstr ""
-
-#: ./voteit/vote_groups/views.py:36
+#: ./voteit/vote_groups/views.py:41
 msgid "Note! Polls ongoing within meeting!"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:97 ./voteit/vote_groups/views.py:240
+#: ./voteit/vote_groups/views.py:96
+msgid "No such group"
+msgstr ""
+
+#: ./voteit/vote_groups/views.py:103 ./voteit/vote_groups/views.py:235
+#: ./voteit/vote_groups/views.py:245
 msgid "You do not have authorization to change voter rights."
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:120
-#, python-format
-msgid "Can not change role for user(s) ${users} with assigned voter rights."
+#: ./voteit/vote_groups/views.py:106
+msgid "Vote transfered"
 msgstr ""
 
 #: ./voteit/vote_groups/views.py:126
 #, python-format
+msgid "Can not change role for user(s) ${users} with assigned voter rights."
+msgstr ""
+
+#: ./voteit/vote_groups/views.py:132
+#, python-format
 msgid "User(s) ${users} are already primary in another group."
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:146
+#: ./voteit/vote_groups/views.py:157
 msgid "Edit vote group"
 msgstr ""
 
 #. Default: Really delete vote group '${vote_group_title}'? This can't be
 #. undone
-#: ./voteit/vote_groups/views.py:178
+#: ./voteit/vote_groups/views.py:183
 msgid "really_delete_vote_group_warning"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:186
-msgid "You do not have authorization to delete groups."
-msgstr ""
-
-#: ./voteit/vote_groups/views.py:189
+#: ./voteit/vote_groups/views.py:188
 #, python-format
 msgid "Deleted '${title}'"
 msgstr ""
 
 #. Default: Choose stand-in for ${user} (${vote_group_title})
-#: ./voteit/vote_groups/views.py:213
+#: ./voteit/vote_groups/views.py:212
 msgid "vote_assignment"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:264
+#: ./voteit/vote_groups/views.py:246
+msgid "Done"
+msgstr ""
+
+#: ./voteit/vote_groups/views.py:263
 msgid "Apply voting rights according to groups + checked in?"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:268
+#: ./voteit/vote_groups/views.py:267
 msgid "voteit.qr not installed"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:278
+#: ./voteit/vote_groups/views.py:284
 msgid "voteit.irl not installed, so electoral register doesn't exist."
 msgstr ""
 
 #. Default: Total voters: ${total}. Added ${added_count} new and removed
 #. ${removed_count}.
-#: ./voteit/vote_groups/views.py:298
+#: ./voteit/vote_groups/views.py:304
 msgid "updated_voter_permissions_notice"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:319
+#: ./voteit/vote_groups/views.py:325
 msgid "Copy groups from another meeting?"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:327
+#: ./voteit/vote_groups/views.py:333
 #, python-format
 msgid "Copied ${count} groups"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:330
+#: ./voteit/vote_groups/views.py:336
 msgid "No groups to copy."
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:343
+#: ./voteit/vote_groups/views.py:349
 msgid "Invite participants from groups"
 msgstr ""
 
 #. Default: Successfully added ${added} invites
-#: ./voteit/vote_groups/views.py:362
+#: ./voteit/vote_groups/views.py:368
 msgid "added_tickets_text"
 msgstr ""
 
 #. Default: No tickets added - all you specified probably exist already.
 #. (Proccessed ${rejected})
-#: ./voteit/vote_groups/views.py:365
+#: ./voteit/vote_groups/views.py:371
 msgid "no_tickets_added"
 msgstr ""
 
 #. Default: Successfully added ${added} invites but discarded ${rejected} since
 #. they already existed or were already used.
-#: ./voteit/vote_groups/views.py:373
+#: ./voteit/vote_groups/views.py:379
 msgid "added_tickets_text_some_rejected"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:391
+#: ./voteit/vote_groups/views.py:397
 msgid "Vote Group settings"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:409
+#: ./voteit/vote_groups/views.py:415
 msgid "Saved, updates will occur when assignments do."
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:439
+#: ./voteit/vote_groups/views.py:445
 msgid "Groups"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:446
+#: ./voteit/vote_groups/views.py:452
 #: ./voteit/vote_groups/templates/meeting_vote_groups.pt:9
 msgid "Vote groups"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:447
+#: ./voteit/vote_groups/views.py:453
 msgid "Handle voter rights with vote groups."
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:454
+#: ./voteit/vote_groups/views.py:460
 msgid "Manage"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:460
+#: ./voteit/vote_groups/views.py:466
 msgid "Settings"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:466
+#: ./voteit/vote_groups/views.py:472
 msgid "Copy from another meeting"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:472
+#: ./voteit/vote_groups/views.py:478
 msgid "Invite participants"
 msgstr ""
 
-#: ./voteit/vote_groups/views.py:479
+#: ./voteit/vote_groups/views.py:485
 msgid "Apply present"
 msgstr ""
 
-#. Default: There are ongoing polls so groups can't be changed right now. You
-#. may reload the page when the polls have closed.
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:13
-msgid "ongoing_polls_notice"
-msgstr ""
-
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:24
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:16
 msgid "New vote group"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:30
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:22
 msgid "Print"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:36
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:28
 msgid "Apply vote rights"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:44
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:36
 msgid "Show my groups"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:50
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:42
 msgid "Show all groups"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:74
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:66
 msgid "Total voters: ${count}"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:80
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:72
 msgid "Unregistered members: ${count}"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:88
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:80
 msgid "Current voters: ${count}"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:94
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:86
 msgid "Checked in: ${count}"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:104
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:96
 msgid "Edit"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:109
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:101
 msgid "Change roles"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:115
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:107
 msgid "Save roles"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:120
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:112
 msgid "Delete"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:128
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:120
 msgid "Member"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:129
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:121
 msgid "Role"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:140
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:132
 msgid "voter"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:143
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:135
 msgid "user will get vote permission when voting register is updated"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:147
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:139
 msgid "checked in"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:166
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:158
 msgid "Choose stand-in"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:169
-msgid "No stand-ins available"
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:163
+msgid "Return vote"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:174
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:180
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:168
 msgid "Release stand-in"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:186
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:171
+msgid "No stand-ins available"
+msgstr ""
+
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:177
 msgid "Substitute for"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:190
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:181
 msgid "Substitute in group"
 msgstr ""
 
-#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:195
+#: ./voteit/vote_groups/templates/meeting_vote_groups.pt:186
 msgid "Voter in group"
-msgstr ""
-
-#: ./voteit/vote_groups/plugins/meeting_presence.py:11
-msgid "Present with group voter rights."
-msgstr ""
-
-#. Default: Will set voter rights for present user according to vote groups
-#. settings.
-#: ./voteit/vote_groups/plugins/meeting_presence.py:12
-msgid "present_with_vote_groups_description"
 msgstr ""

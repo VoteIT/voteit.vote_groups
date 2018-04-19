@@ -33,13 +33,13 @@ class VoteGroupsTests(TestCase):
         return VoteGroups
 
     def _initial_groups(self, groups):
-        name = groups.new()
+        name = groups.new('g1')
         group = groups[name]
         group['one'] = ROLE_STANDIN
         group['two'] = ROLE_PRIMARY
         group['three'] = ROLE_STANDIN
         groups.assign_vote('two', 'one', group)
-        name = groups.new()
+        name = groups.new('g2')
         group = groups[name]
         group['three'] = ROLE_PRIMARY
 
@@ -137,7 +137,7 @@ class VoteGroupsTests(TestCase):
         self.config.testing_securitypolicy(
             userid='one', permissive=True
         )
-        group = filter(lambda g: len(g) == 3, groups.values())[0]
+        group = groups['g1']
         groups.request.is_moderator = False
 
         self.assertTrue(groups.get_assign_permission('one', group))
@@ -155,7 +155,7 @@ class VoteGroupsTests(TestCase):
         self.assertTrue(groups.get_assign_permission('one', group))
         self.assertFalse(groups.get_assign_permission('three', group))
 
-    def test_release_substitute(self):
+    def test_release_substitute_is_moderator(self):
         events = []
 
         def subscriber(event):
@@ -164,13 +164,22 @@ class VoteGroupsTests(TestCase):
 
         groups = self._mk_one()
         groups.request.is_moderator = True
-        group = filter(lambda g: len(g) == 3, groups.values())[0]
+        group = groups['g1']
 
         self.assertIs(groups.release_substitute('one', group), None)
         self.assertEqual(len(events), 2)
         with self.assertRaises(GroupPermissionsException):
             groups.release_substitute('one', group)
         self.assertEqual(len(events), 2)
+
+    def test_release_substitute_is_standin(self):
+        self.config.testing_securitypolicy(
+            userid='one', permissive=True
+        )
+        groups = self._mk_one()
+        groups.request.is_moderator = False
+        group = groups['g1']
+        self.assertIs(groups.release_substitute('one', group), None)
 
     def test_set_role_event(self):
         events = []
@@ -249,7 +258,7 @@ class VoteGroupsTests(TestCase):
             'inactive_voter_roles': {security.VIEW},
         }
         self._initial_groups(groups)
-        group = filter(lambda g: len(g) == 3, groups.values())[0]
+        group = groups['g1']
         groups.update_from_appstruct({
             'title': 'Monty',
             'description': 'python3',

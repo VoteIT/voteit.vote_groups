@@ -23,7 +23,7 @@ class IVoteGroups(IDict):
     """
     settings = Attribute("Settings")
 
-    def new():
+    def new(name=None):
         """ New meeting vote group. Returns id. """
 
     def get_standin_for(userid):

@@ -88,17 +88,22 @@ class VoteGroupsView(BaseView, VoteGroupEditMixin):
         """ Release stand-in
         """
         group_name = self.request.GET.get('vote_group')
+        error = False
         try:
             group = self.vote_groups[group_name]
         except KeyError:
-            raise HTTPNotFound("No such group")
+            group = None
+            self.flash_messages.add(_("No such group"), type='danger')
+            error = True
         voter = self.request.GET.get('voter')
-
-        try:
-            self.vote_groups.release_substitute(voter, group)
-        except GroupPermissionsException:
-            raise HTTPForbidden(_("You do not have authorization to change voter rights."))
-
+        if group:
+            try:
+                self.vote_groups.release_substitute(voter, group)
+            except GroupPermissionsException:
+                self.flash_messages.add(_("You do not have authorization to change voter rights."), type='danger')
+                error = True
+        if not error:
+            self.flash_messages.add(_("Vote transfered"), type='success')
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
@@ -238,12 +243,14 @@ class AssignVoteForm(DefaultEditForm, VoteGroupEditMixin):
             self.vote_groups.assign_vote(self.for_user, appstruct['standin'], self.group)
         except GroupPermissionsException:
             raise HTTPForbidden(_("You do not have authorization to change voter rights."))
+        self.flash_messages.add(_("Done"), type='success')
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
 
     def cancel_success(self, *args):
         url = self.request.resource_url(self.context, 'vote_groups')
         return HTTPFound(location=url)
+    cancel_failure = cancel_success
 
 
 @view_config(name="_qr_voter_groups",
