@@ -8,7 +8,7 @@ VERSION = 1
 class GroupsEvolver(BaseEvolver):
     name = 'voteit.vote_groups'
     sw_version = VERSION
-    initial_db_version = 0
+    initial_db_version = VERSION
 
 
 def includeme(config):
