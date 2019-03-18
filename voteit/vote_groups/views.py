@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from collections import Counter
+from typing import Iterable
+
 from arche.security import groupfinder
 from arche.views.base import BaseForm
 from arche.views.base import BaseView
@@ -353,36 +356,49 @@ class AddGroupTicketsForm(BaseForm, VoteGroupMixin):
     def buttons(self):
         return (self.button_add, self.button_cancel)
 
+    def invite_emails(self, emails, roles, counter):
+        # type: (Iterable, list, Counter) -> None
+        for email in emails:
+            result = self.context.add_invite_ticket(email, roles, sent_by=self.request.authenticated_userid)
+            if result:
+                counter['added'] += 1
+            else:
+                counter['rejected'] += 1
+
     def add_success(self, appstruct):
         groups = appstruct['groups']
-        emails = self.vote_groups.get_emails(group_names=groups)
-        roles = appstruct['roles']
-        added = 0
-        rejected = 0
-        for email in emails:
-            result = self.context.add_invite_ticket(email, roles, sent_by = self.request.authenticated_userid)
-            if result:
-                added += 1
-            else:
-                rejected += 1
-        if not rejected:
+        all_emails = self.vote_groups.get_emails(group_names=groups)
+
+        assigned_voters = self.vote_groups.get_voters()
+        # Filter on selected groups
+        assigned_voter_emails = all_emails.intersection(self.vote_groups.userids_to_emails(assigned_voters))
+        # Potential members included as inactive
+        inactive_voter_emails = all_emails - assigned_voter_emails
+        assigned_voter_roles = self.vote_groups.settings.get('assigned_voter_roles', set())
+        inactive_voter_roles = self.vote_groups.settings.get('inactive_voter_roles', set())
+
+        counter = Counter()
+        self.invite_emails(assigned_voter_emails, assigned_voter_roles, counter)
+        self.invite_emails(inactive_voter_emails, inactive_voter_roles, counter)
+
+        if not counter['rejected']:
             msg = _('added_tickets_text', default = "Successfully added ${added} invites",
-                    mapping={'added': added})
-        elif not added:
+                    mapping={'added': counter['added']})
+        elif not counter['added']:
             msg = _('no_tickets_added',
                     default = "No tickets added - all you specified probably exist already. "
-                    "(Proccessed ${rejected})",
-                    mapping = {'rejected': rejected})
+                              "(Proccessed ${rejected})",
+                    mapping = {'rejected': counter['rejected']})
             self.flash_messages.add(msg, type = 'warning', auto_destruct = False)
             url = self.request.resource_url(self.context, 'add_group_tickets')
             return HTTPFound(location = url)
         else:
             msg = _('added_tickets_text_some_rejected',
                     default = "Successfully added ${added} invites but discarded ${rejected} "
-                    "since they already existed or were already used.",
-                    mapping={'added': added, 'rejected': rejected})
+                              "since they already existed or were already used.",
+                    mapping={'added': counter['added'], 'rejected': counter['rejected']})
         self.flash_messages.add(msg)
-        self.request.session['send_tickets.emails'] = list(emails)
+        self.request.session['send_tickets.emails'] = list(all_emails)
         self.request.session['send_tickets.message'] = appstruct['message']
         url = self.request.resource_url(self.context, 'send_tickets')
         return HTTPFound(location = url)

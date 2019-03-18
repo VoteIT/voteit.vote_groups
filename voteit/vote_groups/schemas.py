@@ -153,12 +153,12 @@ def selectable_groups_widget(node, kw):
 
 
 class AddGroupTicketsSchema(colander.Schema):
-    roles = colander.SchemaNode(
-        colander.Set(),
-        title=_("Roles"),
-        default=(security.ROLE_VIEWER, security.ROLE_DISCUSS, security.ROLE_PROPOSE),
-        widget=deform.widget.CheckboxChoiceWidget(values=_GROUP_ADJUSTED_ROLES, ),
-    )
+    # roles = colander.SchemaNode(
+    #     colander.Set(),
+    #     title=_("Roles"),
+    #     default=(security.ROLE_VIEWER, security.ROLE_DISCUSS, security.ROLE_PROPOSE),
+    #     widget=deform.widget.CheckboxChoiceWidget(values=_GROUP_ADJUSTED_ROLES, ),
+    # )
     message = colander.SchemaNode(
         colander.String(),
         title=_("Welcome text of the email that will be sent"),

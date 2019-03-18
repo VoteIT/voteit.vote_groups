@@ -91,6 +91,19 @@ class VoteGroups(object, IterableUserDict):
             members.update(group.keys())
         return members
 
+    def userids_to_emails(self, userids, validated=True):
+        # type: (Iterable, bool) -> Iterable
+        root = find_root(self.context)
+        for userid in userids:
+            try:
+                user = root['users'][userid]
+            except KeyError:
+                continue
+            if user.email:
+                if validated and not user.email_validated:  # pragma: no cover
+                    continue
+                yield(user.email)
+
     def get_emails(self, group_names=None, potential=True, validated=True):
         if group_names is None:
             group_names = self.keys()
@@ -103,15 +116,17 @@ class VoteGroups(object, IterableUserDict):
             if potential:
                 emails.update(group.potential_members)
                 userids.update(group.keys())
-        for userid in userids:
-            try:
-                user = root['users'][userid]
-            except KeyError:
-                continue
-            if user.email:
-                if validated and not user.email_validated:  # pragma: no cover
-                    continue
-                emails.add(user.email)
+        # TODO Test this
+        emails.update(self.userids_to_emails(userids, validated))
+        # for userid in userids:
+        #     try:
+        #         user = root['users'][userid]
+        #     except KeyError:
+        #         continue
+        #     if user.email:
+        #         if validated and not user.email_validated:  # pragma: no cover
+        #             continue
+        #         emails.add(user.email)
         return emails
 
     def get_voters(self):
