@@ -118,15 +118,6 @@ class VoteGroups(object, IterableUserDict):
                 userids.update(group.keys())
         # TODO Test this
         emails.update(self.userids_to_emails(userids, validated))
-        # for userid in userids:
-        #     try:
-        #         user = root['users'][userid]
-        #     except KeyError:
-        #         continue
-        #     if user.email:
-        #         if validated and not user.email_validated:  # pragma: no cover
-        #             continue
-        #         emails.add(user.email)
         return emails
 
     def get_voters(self):
@@ -137,11 +128,6 @@ class VoteGroups(object, IterableUserDict):
 
     @property
     def voters(self):
-        # try:
-        #     return self._voters
-        # except AttributeError:
-        #     self._voters = self.get_voters()
-        #     return self._voters
         return self.get_voters()
         # TODO Cache this, but drop on any changes, even in individual groups.
 
