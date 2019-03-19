@@ -91,6 +91,19 @@ class VoteGroups(object, IterableUserDict):
             members.update(group.keys())
         return members
 
+    def userids_to_emails(self, userids, validated=True):
+        # type: (Iterable, bool) -> Iterable
+        root = find_root(self.context)
+        for userid in userids:
+            try:
+                user = root['users'][userid]
+            except KeyError:
+                continue
+            if user.email:
+                if validated and not user.email_validated:  # pragma: no cover
+                    continue
+                yield(user.email)
+
     def get_emails(self, group_names=None, potential=True, validated=True):
         if group_names is None:
             group_names = self.keys()
@@ -103,15 +116,8 @@ class VoteGroups(object, IterableUserDict):
             if potential:
                 emails.update(group.potential_members)
                 userids.update(group.keys())
-        for userid in userids:
-            try:
-                user = root['users'][userid]
-            except KeyError:
-                continue
-            if user.email:
-                if validated and not user.email_validated:  # pragma: no cover
-                    continue
-                emails.add(user.email)
+        # TODO Test this
+        emails.update(self.userids_to_emails(userids, validated))
         return emails
 
     def get_voters(self):
@@ -122,11 +128,6 @@ class VoteGroups(object, IterableUserDict):
 
     @property
     def voters(self):
-        # try:
-        #     return self._voters
-        # except AttributeError:
-        #     self._voters = self.get_voters()
-        #     return self._voters
         return self.get_voters()
         # TODO Cache this, but drop on any changes, even in individual groups.
 
