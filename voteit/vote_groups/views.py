@@ -352,6 +352,14 @@ class AddGroupTicketsForm(BaseForm, VoteGroupMixin):
 
     title = _("Invite participants from groups")
 
+    def __call__(self):
+        role_keys = ['assigned_voter_roles', 'inactive_voter_roles']
+        check = sum(bool(self.vote_groups.settings.get(k)) for k in role_keys)
+        if check != len(role_keys):
+            self.flash_messages.add(_("Assign roles before inviting. At least the role view is required."), type='danger')
+            raise HTTPFound(location=self.request.resource_url(self.context, 'vote_groups_settings'))
+        return super(AddGroupTicketsForm, self).__call__()
+
     @property
     def buttons(self):
         return (self.button_add, self.button_cancel)
