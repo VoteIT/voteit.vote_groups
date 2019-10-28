@@ -389,6 +389,7 @@ def apply_adjust_meeting_roles(meeting, group=None, request=None):
         roles.add(userid, assigned_voter_roles, event=False)
     for userid in inactive_voters_members:
         roles.remove(userid, remove_on_inactive, event=False)
+        roles.add(userid, inactive_voter_roles, event=False)
     roles.send_event()
 
 
