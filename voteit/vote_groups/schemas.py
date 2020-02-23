@@ -3,11 +3,10 @@ from __future__ import unicode_literals
 
 import colander
 import deform
-from arche.schemas import userid_hinder_widget
 from arche.validators import existing_userids
 from pyramid.httpexceptions import HTTPNotFound
 from voteit.core import security
-from voteit.core.schemas.common import strip_and_lowercase
+from voteit.core.schemas.common import MeetingUserReferenceWidget, prepare_emails_from_text
 from voteit.core.schemas.meeting import deferred_copy_from_meeting_widget
 from voteit.core.validators import html_string_validator
 from voteit.core.validators import multiple_email_validator
@@ -67,22 +66,18 @@ class EditVoteGroupSchema(colander.Schema):
         widget=deform.widget.TextAreaWidget(),
     )
     members = colander.SchemaNode(
-        colander.Sequence(),
-        colander.SchemaNode(
-            colander.String(),
-            title=_("Username"),
-            name=_('User'),
-            description=_("Start typing a userid"),
-            widget=userid_hinder_widget,
-            validator=existing_userids,
-        )
+        colander.List(),
+        title=_("Username"),
+        description=_("Start typing a userid"),
+        widget=MeetingUserReferenceWidget(),
+        validator=existing_userids,
     )
     potential_members = colander.SchemaNode(
         colander.String(),
         title=_("Emails of potential members"),
         description=_("Add one per row"),
         widget=deform.widget.TextAreaWidget(rows=4),
-        preparer=strip_and_lowercase,
+        preparer=prepare_emails_from_text,
         validator=multiple_email_validator,
         missing="",
     )
