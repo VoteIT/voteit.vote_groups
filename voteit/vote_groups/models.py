@@ -413,7 +413,7 @@ def adjust_roles_after_assignment(event):
 
 
 def includeme(config):
-    config.registry.registerAdapter(VoteGroups)
+    config.registry.registerAdapter(VoteGroups, provided=IVoteGroups)
     config.add_subscriber(user_validated_email_subscriber, IEmailValidatedEvent)
     config.add_subscriber(adjust_roles_after_assignment, IAssignmentChanged)
     config.registry.registerAdapter(PresentWithVoteGroupsVoters, name=PresentWithVoteGroupsVoters.name)

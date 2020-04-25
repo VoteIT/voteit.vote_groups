@@ -57,7 +57,7 @@ class VoteGroupsTests(TestCase):
 
     def test_copy_from_meeting(self):
         from voteit.core.models.meeting import Meeting
-        self.config.registry.registerAdapter(self._cut)
+        self.config.registry.registerAdapter(self._cut, provided=IVoteGroups)
         old_groups = self._mk_one()
         new_groups = self._cut(Meeting(), testing.DummyRequest())
         self.assertIsInstance(old_groups.context, Meeting)
@@ -241,7 +241,7 @@ class VoteGroupsTests(TestCase):
         from voteit.vote_groups.models import VoteGroups
         from voteit.vote_groups.models import adjust_roles_after_assignment
         self.config.add_subscriber(adjust_roles_after_assignment, IAssignmentChanged)
-        self.config.registry.registerAdapter(VoteGroups)
+        self.config.registry.registerAdapter(VoteGroups, provided=IVoteGroups)
         self.config.include('arche.testing')
         self.config.include('voteit.core.testing_helpers.register_catalog')
         root = bootstrap_and_fixture(self.config)
